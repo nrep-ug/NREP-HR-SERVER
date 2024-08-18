@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import staffRoutes from './routes/staffRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 
 const app = express();
@@ -31,6 +32,7 @@ app.use(cors(corsOptions));  // Enable CORS with the specified options
 app.use(express.json());
 
 app.use('/api/staff', staffRoutes);
+app.use('/api/project', projectRoutes);
 
 app.use(errorHandler);
 

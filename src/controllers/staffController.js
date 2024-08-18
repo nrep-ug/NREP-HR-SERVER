@@ -26,3 +26,15 @@ export const getStaff = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getAllStaff = async (req, res, next) => {
+    try {
+        const staffs = await staffService.getAllStaff(req.params.query);
+        if (!staffs) {
+            return res.status(404).json({ message: 'Staffs not found' });
+        }
+        res.status(200).json(staffs);
+    } catch (error) {
+        next(error);
+    }
+}
