@@ -21,6 +21,8 @@ const staffTableId = process.env.STAFF_TABLE_ID;
 const projectDatabaseId = process.env.PROJECT_DB_ID;
 const projectTableId = process.env.PROJECT_TABLE_ID;
 const projectTeamTableId = process.env.PROJECT_TEAM_TABLE_ID;
+const projectTaskTableId = process.env.PROJECT_TASK_TABLE_ID
+const projectTeamTaskTableId = process.env.PROJECT_TASK_TEAM_TABLE_ID
 
 export {
     client,
@@ -31,6 +33,8 @@ export {
     projectDatabaseId,
     projectTableId,
     projectTeamTableId,
+    projectTaskTableId,
+    projectTeamTaskTableId,
     ID,
     Query,
     Permission

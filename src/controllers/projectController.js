@@ -66,3 +66,69 @@ export const addProjectMembers = async (req, res, next) => {
         next(error);
     }
 };
+
+/* PROJECT TASKS */
+export const addProjectTask = async (req, res, next) => {
+    try {
+        // const errors = validationResult(req);
+        // if (!errors.isEmpty()) {
+        //     return res.status(400).json({ errors: errors.array() });
+        // }
+
+        const projectTask = await projectService.addProjectTask(req.body);
+        res.status(201).json(projectTask);
+    } catch (error) {
+        next(error);
+    }
+};
+export const getAllProjectTasks = async (req, res, next) => {
+    try {
+        const tasks = await projectService.getAllProjectTasks(req.params.id);
+        if (!tasks) {
+            return res.status(404).json({ message: 'Tasks not found' });
+        }
+        res.status(200).json(tasks);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getProjectTask = async (req, res, next) => {
+    try {
+        console.log('Getting project: ', req.params)
+        const task = await projectService.getProjectTask(req.params.projectID, req.params.taskID);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+        res.status(200).json(task);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const addProjectTaskMembers = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const projectMembers = await projectService.addProjectTaskMembers(req.params.projectID, req.params.taskID, req.body);
+        res.status(201).json(projectMembers);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getProjectTaskTeam = async (req, res, next) => {
+    try {
+        console.log('Getting project Task Team: ', req.params)
+        const projectTeam = await projectService.getProjectTaskTeam(req.params.projectID, req.params.taskID);
+        if (!projectTeam) {
+            return res.status(404).json({ message: 'Project Task Team not found' });
+        }
+        res.status(200).json(projectTeam);
+    } catch (error) {
+        next(error);
+    }
+}

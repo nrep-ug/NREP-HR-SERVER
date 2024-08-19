@@ -32,7 +32,7 @@ app.use(cors(corsOptions));  // Enable CORS with the specified options
 app.use(express.json());
 
 app.use('/api/staff', staffRoutes);
-app.use('/api/project', projectRoutes);
+app.use('/api/projects', projectRoutes);
 
 app.use(errorHandler);
 
