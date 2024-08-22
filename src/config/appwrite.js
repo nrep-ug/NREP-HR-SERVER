@@ -24,6 +24,13 @@ const projectTeamTableId = process.env.PROJECT_TEAM_TABLE_ID;
 const projectTaskTableId = process.env.PROJECT_TASK_TABLE_ID
 const projectTeamTaskTableId = process.env.PROJECT_TASK_TEAM_TABLE_ID
 
+// PROCUREMENT DATABASE
+const procureDatabaseId = process.env.PROCUREMENT_DB_ID
+const procurePostsTableId = process.env.PROCUREMENT_POSTS_TABLE_ID
+const procureSupplierApplicationTableId = process.env.PROCUREMENT_SUPPLIER_APPLICATION_TABLE_ID
+const procureSupplierTableId = process.env.PROCUREMENT_SUPPLIER_TABLE_ID
+const procureStaffTableId = process.env.PROCUREMENT_SUPPLIER_TABLE_ID
+
 export {
     client,
     storage,
@@ -35,6 +42,11 @@ export {
     projectTeamTableId,
     projectTaskTableId,
     projectTeamTaskTableId,
+    procureDatabaseId,
+    procurePostsTableId,
+    procureSupplierApplicationTableId,
+    procureSupplierTableId,
+    procureStaffTableId,
     ID,
     Query,
     Permission
