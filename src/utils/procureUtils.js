@@ -80,6 +80,3 @@ export async function generateUniqueId(type) {
         throw new Error('Could not generate unique ID');
     }
 }
-
-let test = await generateUniqueId('PR')
-console.log('Generating unique ID: ' + test);
