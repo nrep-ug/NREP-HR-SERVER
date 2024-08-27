@@ -52,6 +52,10 @@ export async function generateUniqueId(type) {
                 counterKey = 'supplierRegistrationCounter';
                 idPrefix = 'SR';
                 break;
+            case 'CAT':
+                counterKey = 'procurementCategoryCounter';
+                idPrefix = 'CAT';
+                break;
             default:
                 throw new Error('Invalid type provided for ID generation');
         }

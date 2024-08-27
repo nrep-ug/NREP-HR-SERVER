@@ -1,5 +1,5 @@
 // src\validations\procureValidation.js
-import { body, query } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 
 export const validateSupplier = [
     body('name')
@@ -70,4 +70,18 @@ export const validateGetAllServices = [
         .optional()
         .isString().withMessage('The "status" parameter must be a string')
         .isIn(['active', 'inactive', 'pending', 'completed']).withMessage('The "status" parameter must be one of: active, inactive, pending, completed')
+];
+
+export const validateProcurementApplication = [
+    body('procurementId').notEmpty().withMessage('Procurement ID is required.'),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!req.files || !req.files['incorporationCertificate'] || !req.files['teamCv'] || !req.files['budget']) {
+            return res.status(400).json({ error: 'All documents marked with an asterik (*) are required.' });
+        }
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
 ];

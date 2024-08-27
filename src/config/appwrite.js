@@ -30,6 +30,8 @@ const procurePostsTableId = process.env.PROCUREMENT_POSTS_TABLE_ID
 const procureSupplierApplicationTableId = process.env.PROCUREMENT_SUPPLIER_APPLICATION_TABLE_ID
 const procureSupplierTableId = process.env.PROCUREMENT_SUPPLIER_TABLE_ID
 const procureStaffTableId = process.env.PROCUREMENT_SUPPLIER_TABLE_ID
+const procureCategoryTableId = process.env.PROCUREMENT_CATEGORY_TABLE_ID
+const procurePostBucketId = process.env.POSTED_PROCUREMENT_BUCKET_ID
 
 export {
     client,
@@ -47,8 +49,10 @@ export {
     procureSupplierApplicationTableId,
     procureSupplierTableId,
     procureStaffTableId,
+    procureCategoryTableId,
+    procurePostBucketId,
     ID,
     Query,
-    Permission
+    Permission,
 };
 
