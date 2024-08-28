@@ -14,16 +14,139 @@ import {
     procureSupplierTableId,
     procureStaffTableId,
     procureCategoryTableId,
+    hrDatabaseId,
+    staffTableId
 } from '../config/appwrite.js';
-import { currentDateTime, uploadFile } from "../utils/utils.js";
+import { getStaff } from '../services/staffService.js'
+import { currentDateTime, uploadFile, isNrepUgEmail } from "../utils/utils.js";
 import { generateUniqueId } from "../utils/procureUtils.js"
 import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
 import moment from 'moment-timezone';
 
+/* STAFF SERVICES */
+
+// Staff sign-up in Procurement module
+export const signUpStaff = async (data) => {
+    /**
+     * - Receives the staff ID being added, Role of the user (e.g HR Manager, Assistant, Officer), userType (admin or staff)
+     * - Account is then created and email is sent to notify user
+     * - Staff logs in with the NREP system password
+    **/
+
+    let staffData = { ...data }
+    console.log(staffData)
+
+    const createdAt = currentDateTime;
+
+    // Register to Procurement Database staff table
+    const response = await databases.createDocument(
+        procureDatabaseId,
+        procureStaffTableId,
+        staffData.staffID,
+        {
+            ...staffData,
+            createdAt,
+            updatedAt: createdAt
+        }
+    )
+
+    // Send E-mail notification
+    // TODO: send notification
+
+    return response;
+}
+
+// Staff sign-in
+// Staff sign-in function
+export const signInStaff = async (data) => {
+    /*
+    * - Query HR Staff table for staff credentials
+    * - Check Procurement Database if Staff Exists
+    * - If ID does not exist, returns a failed login, or else returns a successful login with user data
+    */
+    try {
+        console.log(data);
+
+        // Determine the email field based on the email type
+        const emailField = isNrepUgEmail(data.email) ? 'workEmail' : 'email1';
+
+        // Query HR Staff table for staff credentials
+        const hrResponse = await databases.listDocuments(
+            hrDatabaseId,
+            staffTableId,
+            [Query.equal(emailField, data.email)]
+        );
+
+        if (hrResponse.documents.length !== 1) {
+            return {
+                status: false,
+                message: 'No staff account found. Check your email or password and try again.'
+            };
+        }
+
+        const userCredentials = {
+            password: hrResponse.documents[0].password,
+            staffID: hrResponse.documents[0].staffID
+        };
+
+        // Check Procurement Database if Staff Exists
+        const procurementResponse = await databases.listDocuments(
+            procureDatabaseId,
+            procureStaffTableId,
+            [Query.equal('staffID', userCredentials.staffID)]
+        );
+
+        if (procurementResponse.documents.length !== 1) {
+            return {
+                status: false,
+                message: 'No account found in the Procurement Portal for Staff. Check your email or password and try again.'
+            };
+        }
+
+        const userAccountData = hrResponse.documents[0]
+
+        const user = procurementResponse.documents[0];
+
+        // Check if the password matches
+        if (userCredentials.password !== data.password) {
+            console.log('Invalid credentials');
+            return {
+                status: false,
+                message: 'Invalid password. Please try again.'
+            };
+        }
+
+        console.log('Login successful');
+
+        // Successful sign-in
+        return {
+            status: true,
+            success: true,
+            message: 'Sign-in successful.',
+            data: {
+                ...user,
+                firstName: userAccountData.firstName,
+                middleName: userAccountData.middleName,
+                surName: userAccountData.surName
+            }
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            success: false,
+            status: false,
+            message: `An error occurred. Please try again later or contact support: ${error.message}`,
+            error: error.message
+        };
+    }
+};
+
+
+/* SUPPLIER SERVICES */
+
 // Supplier Registration
-export const signUp = async (data) => {
+export const signUpSupplier = async (data) => {
     const file = data.files
-    // console.log(file);
     let supplierData = { ...data.formData }
     console.log(supplierData)
     const createdAt = currentDateTime;
@@ -54,6 +177,7 @@ export const signUp = async (data) => {
             createdAt,
             supplierID,
             updatedAt: createdAt,
+            userTyp: ['supplier'],
             document: [`SR-${uploadedFile.$id}`],
         }
     )
@@ -62,7 +186,7 @@ export const signUp = async (data) => {
 }
 
 // Supplier sign-in
-export const signIn = async (data) => {
+export const signInSupplier = async (data) => {
     try {
         console.log(data);
         // Retrieve user by email
