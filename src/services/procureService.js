@@ -347,37 +347,59 @@ export const getService = async (id) => {
 }
 
 //Supplier Application for service/product supplying
-export const handleProcurementApplication = async (files) => {
+export const handleProcurementApplication = async (files, data) => {
     const incorporationCertificate = files['incorporationCertificate'][0];
     const teamCv = files['teamCv'][0];
     const budget = files['budget'][0];
     const otherDocument = files['otherDocument'][0];
+
+    let allFiles = [];
 
     const uploadedIncorporationCertificate = await uploadFile(incorporationCertificate.buffer, {
         fileName: incorporationCertificate.originalname,
         mimeType: incorporationCertificate.mimetype,
     });
 
+    allFiles.push(incorporationCertificate.$id);
+
     const uploadedTeamCv = await uploadFile(teamCv.buffer, {
         fileName: teamCv.originalname,
         mimeType: teamCv.mimetype,
     });
+
+    allFiles.push(uploadedTeamCv.$id);
 
     const uploadedBudget = await uploadFile(budget.buffer, {
         fileName: budget.originalname,
         mimeType: budget.mimetype,
     });
 
+    allFiles.push(uploadedBudget.$id);
+
     const uploadedOtherDocument = await uploadFile(otherDocument.buffer, {
         fileName: otherDocument.originalname,
         mimeType: otherDocument.mimetype,
     });
 
+    allFiles.push(uploadedOtherDocument.$id);
+
+    // Save to Supplier Application Table
+    const applicationID = await generateUniqueId('PR')
+    const response = await databases.createDocument(
+        procureDatabaseId,
+        procureSupplierApplicationTableId,
+        applicationID,
+        {
+            applicationID,
+            postID: data.procurementID,
+            supplierID: data.supplierID,
+            submittedDocuments: allFiles
+        }
+    )
+
     return {
-        incorporationCertificate: uploadedIncorporationCertificate,
-        teamCv: uploadedTeamCv,
-        budget: uploadedBudget,
-        otherDocument: uploadedOtherDocument,
+        status: 200,
+        message: 'Application submitted successfully'
     };
 };
 

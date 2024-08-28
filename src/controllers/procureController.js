@@ -183,7 +183,7 @@ export const applyForProcurement = async (req, res, next) => {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const uploadedFiles = await procureService.handleProcurementApplication(req.files);
+        const uploadedFiles = await procureService.handleProcurementApplication(req.files, req.body);
 
         res.status(200).json({
             message: 'Application submitted successfully!',
