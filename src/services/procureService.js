@@ -177,7 +177,7 @@ export const signUpSupplier = async (data) => {
             createdAt,
             supplierID,
             updatedAt: createdAt,
-            userTyp: ['supplier'],
+            userType: ['supplier'],
             document: [`SR-${uploadedFile.$id}`],
         }
     )
