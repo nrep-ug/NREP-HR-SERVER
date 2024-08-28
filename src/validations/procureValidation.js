@@ -73,7 +73,8 @@ export const validateGetAllServices = [
 ];
 
 export const validateProcurementApplication = [
-    body('procurementId').notEmpty().withMessage('Procurement ID is required.'),
+    body('procurementID').notEmpty().withMessage('Procurement ID is required.'),
+    body('supplierID').notEmpty().withMessage('Supplier ID is required.'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!req.files || !req.files['incorporationCertificate'] || !req.files['teamCv'] || !req.files['budget']) {

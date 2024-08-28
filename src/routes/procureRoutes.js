@@ -11,6 +11,7 @@ import {
     getService,
     getAllServicesPage,
     applyForProcurement,
+    getAppliedToServices
 } from '../controllers/procureController.js';
 import {
     validateSignIn,
@@ -46,6 +47,8 @@ router.post(
     validateProcurementApplication,
     applyForProcurement
 );
+
+router.get('/applied', getAppliedToServices);
 
 // TODO: Implement creation of a category
 router.get('/get-categories', getCategories);

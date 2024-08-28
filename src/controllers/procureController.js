@@ -183,13 +183,27 @@ export const applyForProcurement = async (req, res, next) => {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const uploadedFiles = await procureService.handleProcurementApplication(req.files, req.body);
+        const apply = await procureService.handleProcurementApplication(req.files, req.body);
 
-        res.status(200).json({
-            message: 'Application submitted successfully!',
-            procurementId: req.body.procurementId,
-            files: uploadedFiles,
-        });
+        apply.status === 409 ? res.status(409).json(apply) : res.status(200).json(apply);
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get applied to procurement services
+export const getAppliedToServices = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const procure = await procureService.getAppliedToServices(req.query.supplierID)
+
+        res.status(200).json(procure);
+
     } catch (error) {
         next(error);
     }

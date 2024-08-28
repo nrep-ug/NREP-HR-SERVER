@@ -348,6 +348,26 @@ export const getService = async (id) => {
 
 //Supplier Application for service/product supplying
 export const handleProcurementApplication = async (files, data) => {
+    // Check if supplier has alredy applied fo this procurement application
+    const ifApplied = await databases.listDocuments(
+        procureDatabaseId,
+        procureSupplierApplicationTableId,
+        [
+            Query.equal('supplierID', data.supplierID),
+            Query.equal('postID', data.procurementID)
+        ]
+    )
+
+    // console.log('idApplied: ', ifApplied)
+
+    if (ifApplied.documents.length > 0) {
+        return {
+            status: 409,
+            message: 'Already applied for this procurement.'
+        }
+    }
+
+    // Proceed if not already applied
     const incorporationCertificate = files['incorporationCertificate'][0];
     const teamCv = files['teamCv'][0];
     const budget = files['budget'][0];
@@ -360,7 +380,7 @@ export const handleProcurementApplication = async (files, data) => {
         mimeType: incorporationCertificate.mimetype,
     });
 
-    allFiles.push(incorporationCertificate.$id);
+    allFiles.push(uploadedIncorporationCertificate.$id);
 
     const uploadedTeamCv = await uploadFile(teamCv.buffer, {
         fileName: teamCv.originalname,
@@ -384,6 +404,7 @@ export const handleProcurementApplication = async (files, data) => {
     allFiles.push(uploadedOtherDocument.$id);
 
     // Save to Supplier Application Table
+    const createdAt = currentDateTime;
     const applicationID = await generateUniqueId('PR')
     const response = await databases.createDocument(
         procureDatabaseId,
@@ -393,9 +414,13 @@ export const handleProcurementApplication = async (files, data) => {
             applicationID,
             postID: data.procurementID,
             supplierID: data.supplierID,
-            submittedDocuments: allFiles
+            submittedDocuments: allFiles,
+            createdAt,
+            updatedAt: createdAt
         }
     )
+
+    console.log('Applied: ', response)
 
     return {
         status: 200,
