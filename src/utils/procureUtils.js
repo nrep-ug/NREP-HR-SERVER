@@ -42,15 +42,15 @@ export async function generateUniqueId(type) {
         switch (type) {
             case 'PR':
                 counterKey = 'procurementRequestCounter';
-                idPrefix = 'PR';
+                idPrefix = 'PRA';
                 break;
             case 'PS':
                 counterKey = 'procurementPostCounter';
-                idPrefix = 'PS';
+                idPrefix = 'PRF';
                 break;
             case 'SR':
                 counterKey = 'supplierRegistrationCounter';
-                idPrefix = 'SR';
+                idPrefix = 'SPL';
                 break;
             case 'CAT':
                 counterKey = 'procurementCategoryCounter';
@@ -75,7 +75,7 @@ export async function generateUniqueId(type) {
         const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
 
         // Generate the unique ID in the format NREP-{TYPE}-YYYY-NNNN
-        const uniqueId = `NREP-${idPrefix}-${currentYear}-${formattedCounter}`;
+        const uniqueId = `NREP/${idPrefix}/${currentYear}/${formattedCounter}`;
 
         return uniqueId;
 

@@ -349,6 +349,7 @@ export const getService = async (id) => {
 //Supplier Application for service/product supplying
 export const handleProcurementApplication = async (files, data) => {
     // Check if supplier has alredy applied fo this procurement application
+    console.log('Checking if supplier already applied');
     const ifApplied = await databases.listDocuments(
         procureDatabaseId,
         procureSupplierApplicationTableId,
@@ -361,6 +362,7 @@ export const handleProcurementApplication = async (files, data) => {
     // console.log('idApplied: ', ifApplied)
 
     if (ifApplied.documents.length > 0) {
+        console.log('Supplier already applied')
         return {
             status: 409,
             message: 'Already applied for this procurement.'
@@ -368,6 +370,7 @@ export const handleProcurementApplication = async (files, data) => {
     }
 
     // Proceed if not already applied
+    console.log('Not yet applied. Proceeding to apply')
     const incorporationCertificate = files['incorporationCertificate'][0];
     const teamCv = files['teamCv'][0];
     const budget = files['budget'][0];
@@ -379,6 +382,8 @@ export const handleProcurementApplication = async (files, data) => {
         fileName: incorporationCertificate.originalname,
         mimeType: incorporationCertificate.mimetype,
     });
+
+    console.log('Certificate Data: ', uploadedIncorporationCertificate);
 
     allFiles.push(uploadedIncorporationCertificate.$id);
 
