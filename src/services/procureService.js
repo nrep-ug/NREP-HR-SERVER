@@ -193,7 +193,7 @@ export const signInSupplier = async (data) => {
         const userData = await databases.listDocuments(
             procureDatabaseId,
             procureSupplierTableId, [
-            Query.equal('email', data.email)
+            Query.equal('accountEmail', data.email)
         ]);
 
         if (userData.documents.length !== 1) {
