@@ -76,3 +76,11 @@ export const getFileById = async (fileId) => {
         throw error; // Re-throw the error to be handled by the caller
     }
 };
+
+export function isNrepUgEmail(email) {
+    // Regular expression to match the domain nrep.ug and its subdomains
+    const regex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*nrep\.ug$/;
+
+    // Test the email against the regex
+    return regex.test(email);
+}

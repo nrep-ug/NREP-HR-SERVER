@@ -1,10 +1,29 @@
-import multer from 'multer';
-import { configureMulter } from '../config/multerConfig.js'
 import { validationResult } from 'express-validator';
 import * as procureService from '../services/procureService.js';
 
-// Rewgister Service Provider
-export const signUp = async (req, res, next) => {
+// Register Service Provider
+export const signUpStaff = async (req, res, next) => {
+    try {
+        // Validate the input if necessary
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        console.log('staffData: ', req.body)
+
+        const createAccount = await procureService.signUpStaff(req.body);
+
+        res.status(201).json({
+            message: 'Staff Account Created successfully!',
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Register Service Provider
+export const signUpSupplier = async (req, res, next) => {
     try {
         // Validate the input if necessary
         const errors = validationResult(req);
@@ -17,10 +36,10 @@ export const signUp = async (req, res, next) => {
         console.log('File: ', req.file);  // Should show the file information
 
         // Proceed with your service or business logic
-        const createAccount = await procureService.signUp({ formData: req.body, files: req.file });
+        const createAccount = await procureService.signUpSupplier({ formData: req.body, files: req.file });
 
         res.status(201).json({
-            message: 'Account Created successfully!',
+            message: 'Supplier Account Created successfully!',
         });
     } catch (error) {
         next(error);
@@ -37,7 +56,13 @@ export const signIn = async (req, res, next) => {
         }
 
         // Call the signIn service with the request body
-        const result = await procureService.signIn(req.body);
+        let result
+        if (req.body.userType.includes('supplier')) {
+            result = await procureService.signInSupplier(req.body);
+        }
+        else if (req.body.userType.includes('staff') || req.body.userType.includes('admin')) {
+            result = await procureService.signInStaff(req.body);
+        }
 
         if (!result.status) {
             return res.status(401).json({ message: result.message });

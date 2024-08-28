@@ -1,8 +1,9 @@
 // src\routes\procureRoutes.js
 import express from 'express';
 import {
+    signUpStaff,
     getAllServices,
-    signUp,
+    signUpSupplier,
     signIn,
     // addService,
     createProcurementPost,
@@ -22,7 +23,8 @@ import upload from '../config/multerConfig2.js'; // Import multer configuration
 
 const router = express.Router();
 
-router.post('/supplier-register', upload.single('documents'), validateSupplier, signUp);
+router.post('/staff-register', signUpStaff) // To implement validateStaff
+router.post('/supplier-register', upload.single('documents'), validateSupplier, signUpSupplier);
 router.post('/sign-in', validateSignIn, signIn);
 router.post(
     '/add-service',
