@@ -1,5 +1,6 @@
 import { validationResult } from 'express-validator';
 import * as procureService from '../services/procureService.js';
+import mime from 'mime-types'
 
 // Register Service Provider
 export const signUpStaff = async (req, res, next) => {
@@ -222,5 +223,24 @@ export const getAppliedToServiceData = async (req, res, next) => {
 
     } catch (error) {
         next(error);
+    }
+};
+
+// File View
+export const viewFile = async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        const arrayBuffer = await procureService.getFileView(fileId);
+
+        // Set the content type according to the file type
+        res.setHeader('Content-Type', 'application/pdf'); // Example: application/pdf, image/png, etc.
+        res.setHeader('Content-Length', arrayBuffer.byteLength);
+        res.setHeader('Content-Disposition', `inline; filename="${fileId}.pdf"`); // Adjust filename and type as necessary
+
+        // Send the ArrayBuffer as the response body
+        res.send(Buffer.from(arrayBuffer));
+    } catch (error) {
+        console.error('Error fetching file view:', error);
+        res.status(500).json({ message: 'Failed to fetch the document' });
     }
 };

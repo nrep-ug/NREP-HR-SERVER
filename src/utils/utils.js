@@ -50,6 +50,16 @@ export const uploadFile2 = async (file, fileInfo) => {
     }
 };
 
+// Appwrite File Preview
+export const appwriteFileView = async (fileId, bucketId) => {
+    const result = await storage.getFileView(
+        bucketId,
+        fileId
+    )
+
+    return result;
+};
+
 // Retrieve a file from the MySQL database by fileId
 export const getFileById = async (fileId) => {
     try {

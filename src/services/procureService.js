@@ -15,10 +15,11 @@ import {
     procureStaffTableId,
     procureCategoryTableId,
     hrDatabaseId,
-    staffTableId
+    staffTableId,
+    procurePostBucketId
 } from '../config/appwrite.js';
 import { getStaff } from '../services/staffService.js'
-import { currentDateTime, uploadFile, isNrepUgEmail } from "../utils/utils.js";
+import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView } from "../utils/utils.js";
 import { generateUniqueId } from "../utils/procureUtils.js"
 import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
 import moment from 'moment-timezone';
@@ -383,30 +384,30 @@ export const handleProcurementApplication = async (files, data) => {
         mimeType: incorporationCertificate.mimetype,
     });
 
-    console.log('Certificate Data: ', uploadedIncorporationCertificate);
-
-    allFiles.push(uploadedIncorporationCertificate.$id);
+    allFiles.push(JSON.stringify(uploadedIncorporationCertificate));
 
     const uploadedTeamCv = await uploadFile(teamCv.buffer, {
         fileName: teamCv.originalname,
         mimeType: teamCv.mimetype,
     });
 
-    allFiles.push(uploadedTeamCv.$id);
+    allFiles.push(JSON.stringify(uploadedTeamCv));
 
     const uploadedBudget = await uploadFile(budget.buffer, {
         fileName: budget.originalname,
         mimeType: budget.mimetype,
     });
 
-    allFiles.push(uploadedBudget.$id);
+    allFiles.push(JSON.stringify(uploadedBudget));
 
     const uploadedOtherDocument = await uploadFile(otherDocument.buffer, {
         fileName: otherDocument.originalname,
         mimeType: otherDocument.mimetype,
     });
 
-    allFiles.push(uploadedOtherDocument.$id);
+    allFiles.push(JSON.stringify(uploadedOtherDocument));
+
+    console.log('all files uploaded: ', allFiles)
 
     // Save to Supplier Application Table
     const createdAt = currentDateTime;
@@ -430,12 +431,14 @@ export const handleProcurementApplication = async (files, data) => {
 
     return {
         status: 200,
-        message: 'Application submitted successfully'
+        message: 'Application submitted successfully',
+        data: response
     };
 };
 
 // Get Applied to services/products by Supplier
 export const getAppliedToServices = async (supplierID) => {
+    console.log('getting applied to services/products', supplierID);
     const response = await databases.listDocuments(
         procureDatabaseId,
         procureSupplierApplicationTableId,
@@ -443,6 +446,8 @@ export const getAppliedToServices = async (supplierID) => {
             Query.equal('supplierID', supplierID)
         ]
     )
+
+    console.log(response);
 
     return response.documents
 }
@@ -489,3 +494,14 @@ export const getCategories = async () => {
 
     return response
 }
+
+//File View
+export const getFileView = async (fileId) => {
+    const response = await appwriteFileView(fileId, procurePostBucketId)
+
+    console.log('file view: ', response)
+
+    return response
+}
+
+// await getFileView('66d0e1de00272fc0613e')
