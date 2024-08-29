@@ -208,3 +208,19 @@ export const getAppliedToServices = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getAppliedToServiceData = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const procure = await procureService.getAppliedToServiceData(req.query.supplierID, req.query.serviceID)
+
+        res.status(200).json(procure);
+
+    } catch (error) {
+        next(error);
+    }
+};

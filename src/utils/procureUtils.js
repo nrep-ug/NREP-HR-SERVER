@@ -72,10 +72,10 @@ export async function generateUniqueId(type) {
         await fs.writeFile(counterFilePath, JSON.stringify(counterData, null, 2));
 
         const currentYear = new Date().getFullYear();
-        const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
+        const formattedCounter = String(counterData[counterKey]).padStart(3, '0');
 
         // Generate the unique ID in the format NREP-{TYPE}-YYYY-NNNN
-        const uniqueId = `NREP/${idPrefix}/${currentYear}/${formattedCounter}`;
+        const uniqueId = `NREP-${idPrefix}-${currentYear}-${formattedCounter}`;
 
         return uniqueId;
 

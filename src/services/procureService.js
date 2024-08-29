@@ -411,6 +411,7 @@ export const handleProcurementApplication = async (files, data) => {
     // Save to Supplier Application Table
     const createdAt = currentDateTime;
     const applicationID = await generateUniqueId('PR')
+    // console.log('PR application ID: ', applicationID);
     const response = await databases.createDocument(
         procureDatabaseId,
         procureSupplierApplicationTableId,
