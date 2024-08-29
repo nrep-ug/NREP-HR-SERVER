@@ -13,6 +13,7 @@ const allowedOrigins = [
     'http://localhost:3000',          // Localhost
     'http://nrep.ug',             // nrep.ug without ssl
     'https://nrep.ug',            // nrep.ug with ssl
+    'https://lkkz9p-3005.csb.app', // COODE-SANDBOX
 ];
 
 const allowedBaseDomain = '.nrep.ug'; // Allow all subdomains under nrep.ug

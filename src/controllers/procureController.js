@@ -61,7 +61,7 @@ export const signIn = async (req, res, next) => {
         if (req.body.userType.includes('supplier')) {
             result = await procureService.signInSupplier(req.body);
         }
-        else if (req.body.userType.includes('staff') || req.body.userType.includes('admin')) {
+        else if (req.body.userType.includes('staff')) {
             result = await procureService.signInStaff(req.body);
         }
 
