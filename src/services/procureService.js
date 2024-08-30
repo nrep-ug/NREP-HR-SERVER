@@ -275,7 +275,7 @@ export const createProcurementPost = async (formData, file) => {
             questionsDeadline: formData.questionsDeadline,
             contractAwardDate: formData.contractAwardDate,
             createdBy: formData.createdBy,
-            otherDocuments: uploadedFile ? [`PS-${uploadedFile.$id}`] : null,
+            otherDocuments: uploadedFile ? [JSON.stringify(uploadedFile)] : null,
             procureID: postID,
             createdAt,
             updatedAt: createdAt
