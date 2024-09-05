@@ -1,8 +1,8 @@
-.env
+# .env
 /node_modules
 *.log
 coverage/
-/src/data
+# /src/data
 /storage.md
 /.codesandbox
 /.devcontainer
