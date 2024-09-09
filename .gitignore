@@ -2,8 +2,8 @@
 /node_modules
 *.log
 coverage/
-/src/data
 /storage.md
 /.codesandbox
 /.devcontainer
 /.github
+/src/data/procurementCounter.json
