@@ -161,7 +161,8 @@ export const signUpSupplier = async (data) => {
     supplierData.password = hashedPassword;
 
     let uploadedFile = null;
-    if (file) {
+    // console.log('Files...: ', file);
+    if (file !== undefined) {
         uploadedFile = await uploadFile(file.buffer, {
             fileName: file.originalname,
             mimeType: file.mimetype,
@@ -179,7 +180,7 @@ export const signUpSupplier = async (data) => {
             supplierID,
             updatedAt: createdAt,
             userType: ['supplier'],
-            document: [`SR-${uploadedFile.$id}`],
+            document: uploadedFile !== null ? [`SR-${uploadedFile.$id}`] : [],
         }
     )
 
