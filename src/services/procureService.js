@@ -384,7 +384,7 @@ export const getService = async (id) => {
         id
     )
 
-    console.log('service: ', response);
+    // console.log('service: ', response);
 
     return response
 }
