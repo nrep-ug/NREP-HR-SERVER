@@ -3,7 +3,6 @@ import path from 'path';
 
 const counterFilePath = path.resolve('./src/data/procurementCounter.json'); // Path to the counter file
 const counterDir = path.dirname(counterFilePath); // Directory path
-console.log(counterDir);
 
 /**
  * Generates a unique ID in the format NREP-{TYPE}-YYYY-NNNN

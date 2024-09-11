@@ -43,6 +43,7 @@ router.post(
     upload.fields([
         { name: 'incorporationCertificate', maxCount: 1 },
         { name: 'teamCv', maxCount: 1 },
+        { name: 'teamCv2', maxCount: 1 },
         { name: 'budget', maxCount: 1 },
         { name: 'otherDocument', maxCount: 1 },
     ]),

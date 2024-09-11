@@ -3,6 +3,8 @@
  *  - Set all the expirations at either midnight, or 18:00 from the client side
  *  - Create a function that checks and updates the post `status` every midnight hour after the expiration date
  */
+import fs from 'fs';
+import path from 'path';
 import {
     storage,
     databases,
@@ -16,10 +18,10 @@ import {
     procureCategoryTableId,
     hrDatabaseId,
     staffTableId,
-    procurePostBucketId
+    procurePostBucketId,
 } from '../config/appwrite.js';
 import { getStaff } from '../services/staffService.js'
-import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView } from "../utils/utils.js";
+import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile } from "../utils/utils.js";
 import { generateUniqueId } from "../utils/procureUtils.js"
 import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
 import moment from 'moment-timezone';
@@ -147,45 +149,84 @@ export const signInStaff = async (data) => {
 
 // Supplier Registration
 export const signUpSupplier = async (data) => {
-    const file = data.files
-    let supplierData = { ...data.formData }
-    console.log(supplierData)
+    const file = data.files;
+    let supplierData = { ...data.formData };
     const createdAt = currentDateTime;
     const supplierID = await generateUniqueId('SR');
+    console.log('supplierID: ', supplierID);
 
     // Encrypt the password
-    const saltRounds = 10; // Number of salt rounds for hashing
+    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(supplierData.password, saltRounds);
-
-    // Replace the plain password with the hashed password
     supplierData.password = hashedPassword;
 
+    // Upload File if provided
     let uploadedFile = null;
-    // console.log('Files...: ', file);
     if (file !== undefined) {
-        uploadedFile = await uploadFile(file.buffer, {
-            fileName: file.originalname,
-            mimeType: file.mimetype,
-        });
+        uploadedFile = await uploadFile(
+            file.buffer,
+            {
+                fileName: file.originalname,
+                mimeType: file.mimetype,
+            },
+            procurePostBucketId
+        );
     }
 
-    // Register to Database table
-    const response = await databases.createDocument(
-        procureDatabaseId,
-        procureSupplierTableId,
+    // Define the path to the JSON file
+    const jsonFilePath = path.resolve('src/data/signup.json');
+
+    // Read existing data from the JSON file
+    let existingData = [];
+    if (fs.existsSync(jsonFilePath)) {
+        const fileContent = fs.readFileSync(jsonFilePath, 'utf8');
+        existingData = fileContent ? JSON.parse(fileContent) : [];
+    }
+
+    // Append the new supplier data
+    const newSupplierEntry = {
+        ...supplierData,
+        createdAt,
         supplierID,
-        {
-            ...supplierData,
-            createdAt,
+        updatedAt: createdAt,
+        userType: ['supplier'],
+        document: uploadedFile !== null ? [`${uploadedFile.$id}`] : [],
+    };
+    existingData.push(newSupplierEntry);
+
+    // Write the updated data back to the JSON file
+    fs.writeFileSync(jsonFilePath, JSON.stringify(existingData, null, 2), 'utf8');
+
+    // Register to the database
+    let response
+    try {
+        response = await databases.createDocument(
+            procureDatabaseId,
+            procureSupplierTableId,
             supplierID,
-            updatedAt: createdAt,
-            userType: ['supplier'],
-            document: uploadedFile !== null ? [`SR-${uploadedFile.$id}`] : [],
+            newSupplierEntry
+        );
+    } catch (e) {
+        console.log(e);
+
+        // Delete the uploaded file from the database if provided, otherwise
+        console.log('Doc uploaded:', newSupplierEntry.document)
+        if (newSupplierEntry.document.length > 0) {
+            await deleteAppwriteFile(procurePostBucketId, newSupplierEntry.document[0])
         }
-    )
+
+        console.log(e);
+        if (e.type === 'document_already_exists') {
+            console.log('error type: ', e.type)
+            throw new Error('The company email or selected login email is already in use.')
+        }
+        else {
+            throw new Error(`${e.type ? e.type : 'Failed to create account'}... ${e.message ? e.message : ''}`)
+        }
+    }
 
     return response;
-}
+};
 
 // Supplier sign-in
 export const signInSupplier = async (data) => {
@@ -349,92 +390,223 @@ export const getService = async (id) => {
 }
 
 //Supplier Application for service/product supplying
+// export const handleProcurementApplication = async (files, data) => {
+//     // Check if supplier has alredy applied fo this procurement application
+//     console.log('Checking if supplier already applied');
+//     const ifApplied = await databases.listDocuments(
+//         procureDatabaseId,
+//         procureSupplierApplicationTableId,
+//         [
+//             Query.equal('supplierID', data.supplierID),
+//             Query.equal('postID', data.procurementID)
+//         ]
+//     )
+
+//     // console.log('idApplied: ', ifApplied)
+
+//     if (ifApplied.documents.length > 0) {
+//         console.log('Supplier already applied')
+//         return {
+//             status: 409,
+//             message: 'Already applied for this procurement.'
+//         }
+//     }
+
+//     // Proceed if not already applied
+//     console.log('Not yet applied. Proceeding to apply')
+//     const incorporationCertificate = files['incorporationCertificate'][0];
+//     const teamCv = files['teamCv'][0];
+//     const teamCv2 = files['teamCv2'][0];
+//     const budget = files['budget'][0];
+//     const otherDocument = files['otherDocument'][0];
+
+//     let allFiles = [];
+
+//     // Upload certificate of incoporation
+//     const uploadedIncorporationCertificate = await uploadFile(
+//         incorporationCertificate.buffer,
+//         {
+//             fileName: incorporationCertificate.originalname,
+//             mimeType: incorporationCertificate.mimetype,
+//         },
+//         procurePostBucketId
+//     );
+
+//     allFiles.push(JSON.stringify(uploadedIncorporationCertificate));
+
+//     // Upload team cv-1
+//     const uploadedTeamCv = await uploadFile(
+//         teamCv.buffer,
+//         {
+//             fileName: teamCv.originalname,
+//             mimeType: teamCv.mimetype,
+//         },
+//         procurePostBucketId
+//     );
+
+//     allFiles.push(JSON.stringify(uploadedTeamCv));
+
+//     // Upload team cv-2
+//     const uploadedTeamCv2 = await uploadFile(
+//         teamCv2.buffer,
+//         {
+//             fileName: teamCv2.originalname,
+//             mimeType: teamCv2.mimetype,
+//         },
+//         procurePostBucketId
+//     );
+
+//     allFiles.push(JSON.stringify(uploadedTeamCv2));
+
+//     // Upload budget
+//     const uploadedBudget = await uploadFile(
+//         budget.buffer,
+//         {
+//             fileName: budget.originalname,
+//             mimeType: budget.mimetype,
+//         },
+//         procurePostBucketId
+//     );
+
+//     allFiles.push(JSON.stringify(uploadedBudget));
+
+//     //Upload other documents
+//     const uploadedOtherDocument = await uploadFile(
+//         otherDocument.buffer,
+//         {
+//             fileName: otherDocument.originalname,
+//             mimeType: otherDocument.mimetype,
+//         },
+//         procurePostBucketId
+//     );
+
+//     allFiles.push(JSON.stringify(uploadedOtherDocument));
+
+//     console.log('all files uploaded: ', allFiles)
+
+//     // Save to Supplier Application Table
+//     const createdAt = currentDateTime;
+//     const applicationID = await generateUniqueId('PR')
+//     // console.log('PR application ID: ', applicationID);
+//     const response = await databases.createDocument(
+//         procureDatabaseId,
+//         procureSupplierApplicationTableId,
+//         applicationID,
+//         {
+//             applicationID,
+//             postID: data.procurementID,
+//             supplierID: data.supplierID,
+//             submittedDocuments: allFiles,
+//             createdAt,
+//             updatedAt: createdAt
+//         }
+//     )
+
+//     console.log('Applied: ', response)
+
+//     return {
+//         status: 200,
+//         message: 'Application submitted successfully',
+//         data: response
+//     };
+// };
 export const handleProcurementApplication = async (files, data) => {
-    // Check if supplier has alredy applied fo this procurement application
-    console.log('Checking if supplier already applied');
-    const ifApplied = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
-        [
-            Query.equal('supplierID', data.supplierID),
-            Query.equal('postID', data.procurementID)
-        ]
-    )
+    try {
+        // Check if the supplier has already applied for this procurement application
+        console.log(`Checking if supplier (${data.supplierID}) already applied for ${data.procurementID}`);
+        const ifApplied = await databases.listDocuments(
+            procureDatabaseId,
+            procureSupplierApplicationTableId,
+            [
+                Query.equal('supplierID', data.supplierID),
+                Query.equal('postID', data.procurementID),
+            ]
+        );
 
-    // console.log('idApplied: ', ifApplied)
-
-    if (ifApplied.documents.length > 0) {
-        console.log('Supplier already applied')
-        return {
-            status: 409,
-            message: 'Already applied for this procurement.'
+        if (ifApplied.documents.length > 0) {
+            console.log('Supplier already applied');
+            return {
+                status: 409,
+                message: `Already applied for this procurement (REF.No.: ${data.procurementID}).`,
+            };
         }
-    }
 
-    // Proceed if not already applied
-    console.log('Not yet applied. Proceeding to apply')
-    const incorporationCertificate = files['incorporationCertificate'][0];
-    const teamCv = files['teamCv'][0];
-    const budget = files['budget'][0];
-    const otherDocument = files['otherDocument'][0];
+        // Function to upload a file
+        const uploadFileHandler = async (file) => {
+            if (!file) return null; // Check if the file exists
+            return await uploadFile(
+                file.buffer,
+                {
+                    fileName: file.originalname,
+                    mimeType: file.mimetype,
+                },
+                procurePostBucketId
+            );
+        };
 
-    let allFiles = [];
+        // Proceed with file uploads if not already applied
+        console.log('Not yet applied. Proceeding to apply');
 
-    const uploadedIncorporationCertificate = await uploadFile(incorporationCertificate.buffer, {
-        fileName: incorporationCertificate.originalname,
-        mimeType: incorporationCertificate.mimetype,
-    });
+        const filesToUpload = [
+            { key: 'incorporationCertificate', required: true },
+            { key: 'teamCv', required: true },
+            { key: 'teamCv2', required: false },
+            { key: 'budget', required: false },
+            { key: 'otherDocument', required: false },
+        ];
 
-    allFiles.push(JSON.stringify(uploadedIncorporationCertificate));
+        let allFiles = [];
 
-    const uploadedTeamCv = await uploadFile(teamCv.buffer, {
-        fileName: teamCv.originalname,
-        mimeType: teamCv.mimetype,
-    });
+        // Iterate over the files and upload them if they exist
+        for (const { key, required } of filesToUpload) {
+            const file = files[key] ? files[key][0] : null;
+            if (file || !required) {
+                const uploadedFile = await uploadFileHandler(file);
+                if (uploadedFile) {
+                    allFiles.push(JSON.stringify(uploadedFile));
+                }
+            } else {
+                return {
+                    status: 400,
+                    message: `${key} is required and was not provided.`,
+                };
+            }
+        }
 
-    allFiles.push(JSON.stringify(uploadedTeamCv));
+        console.log('All files uploaded: ', allFiles);
 
-    const uploadedBudget = await uploadFile(budget.buffer, {
-        fileName: budget.originalname,
-        mimeType: budget.mimetype,
-    });
+        // Save to Supplier Application Table
+        const createdAt = currentDateTime;
+        const applicationID = await generateUniqueId('PR');
 
-    allFiles.push(JSON.stringify(uploadedBudget));
-
-    const uploadedOtherDocument = await uploadFile(otherDocument.buffer, {
-        fileName: otherDocument.originalname,
-        mimeType: otherDocument.mimetype,
-    });
-
-    allFiles.push(JSON.stringify(uploadedOtherDocument));
-
-    console.log('all files uploaded: ', allFiles)
-
-    // Save to Supplier Application Table
-    const createdAt = currentDateTime;
-    const applicationID = await generateUniqueId('PR')
-    // console.log('PR application ID: ', applicationID);
-    const response = await databases.createDocument(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
-        applicationID,
-        {
+        const response = await databases.createDocument(
+            procureDatabaseId,
+            procureSupplierApplicationTableId,
             applicationID,
-            postID: data.procurementID,
-            supplierID: data.supplierID,
-            submittedDocuments: allFiles,
-            createdAt,
-            updatedAt: createdAt
-        }
-    )
+            {
+                applicationID,
+                postID: data.procurementID,
+                supplierID: data.supplierID,
+                submittedDocuments: allFiles,
+                createdAt,
+                updatedAt: createdAt,
+            }
+        );
 
-    console.log('Applied: ', response)
+        console.log('Applied: ', response);
 
-    return {
-        status: 200,
-        message: 'Application submitted successfully',
-        data: response
-    };
+        return {
+            status: 200,
+            message: 'Application submitted successfully',
+            data: response,
+        };
+    } catch (error) {
+        console.error('Error during application submission: ', error);
+        return {
+            status: 500,
+            message: 'An error occurred during the application submission.',
+        };
+    }
 };
 
 // Get Applied to services/products by Supplier
@@ -498,11 +670,7 @@ export const getCategories = async () => {
 
 //File View
 export const getFileView = async (fileId) => {
+    console.log('Getting file to view', fileId)
     const response = await appwriteFileView(fileId, procurePostBucketId)
-
-    console.log('file view: ', response)
-
     return response
 }
-
-// await getFileView('66d0e1de00272fc0613e')

@@ -7,3 +7,5 @@ coverage/
 /.devcontainer
 /.github
 /src/data/procurementCounter.json
+/src/data/docID.json
+/src/data/signup.json

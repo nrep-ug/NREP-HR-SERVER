@@ -34,7 +34,7 @@ export const signUpSupplier = async (req, res, next) => {
 
         // Log the incoming data to verify
         console.log('Data: ', req.body); // Should show the form fields
-        console.log('File: ', req.file);  // Should show the file information
+        // console.log('File: ', req.file);  // Should show the file information
 
         // Proceed with your service or business logic
         const createAccount = await procureService.signUpSupplier({ formData: req.body, files: req.file });

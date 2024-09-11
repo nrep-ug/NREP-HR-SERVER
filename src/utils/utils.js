@@ -1,4 +1,6 @@
 // src/utils/utils.js
+import { promises as fs } from 'fs';
+import path from 'path';
 import pool from '../config/mysqlConfig.js';
 import moment from 'moment-timezone';
 import { InputFile } from 'node-appwrite/file'
@@ -11,12 +13,68 @@ import {
 // DATE/TIME
 export const currentDateTime = moment().tz('Africa/Nairobi');
 
+// DATE/TIME as `dd-mm-yyyy-hhmmss`
+export const formatDate = () => {
+    // Get the current date and time with moment-timezone
+    const now = moment().tz('Africa/Nairobi'); // You can set your desired timezone instead of 'UTC'
+
+    // Format the date in 'dd-mm-yyyy-hhmmss'
+    return now.format('DD-MM-YYYY-HHmmss');
+};
+
 // Upload file to appwrite bucket
-export const uploadFile = async (file, fileInfo) => {
-    console.log('Uploading file: ', fileInfo.fileName)
+export const uploadFile = async (file, fileInfo, bucketId) => {
+
+    /* GENERATING FILE-ID */
+    const counterFilePath = path.resolve('./src/data/docID.json'); // Path to the counter file
+    const counterDir = path.dirname(counterFilePath); // Directory path
+
+    // Ensure the directory exists
+    await fs.mkdir(counterDir, { recursive: true });
+
+    let data;
+
+    // Check if the file exists and read its content, or initialize the counter
+    try {
+        data = await fs.readFile(counterFilePath, 'utf-8');
+    } catch (error) {
+        if (error.code === 'ENOENT') { // If the file does not exist
+            data = JSON.stringify({
+                documentID: 0
+            });
+            await fs.writeFile(counterFilePath, data);
+        } else {
+            throw error; // Rethrow if another error occurred
+        }
+    }
+
+    const counterData = JSON.parse(data);
+
+    // Determine the key based on the type
+    let counterKey = 'documentID';
+
+    // Initialize the counter if the key doesn't exist
+    if (!counterData.hasOwnProperty(counterKey)) {
+        counterData[counterKey] = 0;
+    }
+
+    // Increment the relevant counter
+    counterData[counterKey] += 1;
+
+    // Save the updated counter back to the file
+    await fs.writeFile(counterFilePath, JSON.stringify(counterData, null, 2));
+
+    const currentDateTime = formatDate();
+    const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
+
+    // Generate the unique ID in the format NREP-{TYPE}-YYYY-NNNN
+    const uniqueId = `DOC-${currentDateTime}-${formattedCounter}`;
+
+    /* SAVING DOCUMENT */
+    console.log('Uploading file ... ', uniqueId)
     const response = await storage.createFile(
-        procurePostBucketId,
-        ID.unique(),
+        bucketId,
+        uniqueId,
         InputFile.fromBuffer(file, fileInfo.fileName)
     )
     console.log('Finished uploading file: ', fileInfo.fileName)
@@ -59,6 +117,23 @@ export const appwriteFileView = async (fileId, bucketId) => {
 
     return result;
 };
+
+// Delete a file from the Appwrite bucket
+export const deleteAppwriteFile = async (bucketId, fileId) => {
+    try {
+        console.log('deleteAppwriteFile: ', bucketId, ' ---File to be deleted: ', fileId);
+        const response = await storage.deleteFile(
+            bucketId,
+            fileId
+        );
+        console.log('File deleted: ', fileId, '--BucketId: ', bucketId);
+        return response;
+    }
+    catch (err) {
+        console.log('Failed to delete file: ', err);
+        return
+    }
+}
 
 // Retrieve a file from the MySQL database by fileId
 export const getFileById = async (fileId) => {
