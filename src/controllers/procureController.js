@@ -80,6 +80,59 @@ export const signIn = async (req, res, next) => {
     }
 };
 
+// Password Reset
+export const handlePasswordResetRequest = async (req, res, next) => {
+    try {
+        // Validate the input if necessary
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        console.log('Email to reset: ', req.body)
+
+        const resetPassword = await procureService.handlePasswordResetRequest(req.body.email);
+
+        res.status(201).json({
+            message: `A password reset code has been sent to your email (${req.body.email}).`,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Password code reset confirmation
+export const confirmPasswordResetCode = async (req, res, next) => {
+    try {
+        console.log('Confirming Password Reset Code: ', req.body)
+        const response = await procureService.confirmPasswordResetCode(req.body.email, req.body.code);
+        if (!response.success) {
+            return res.status(404).json(response);
+        }
+        res.status(200).json(response);
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// Handle Password Modification/Change with new password
+export const handlePasswordChange = async (req, res, next) => {
+    try {
+
+        // Validate the input if necessary
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        console.log('Changing supplier password ... ', req.body)
+        const response = await procureService.handlePasswordChange(req.body.code, req.body.email, req.body.newPassword)
+        res.status(200).json(response);
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Get a service
 export const getService = async (req, res, next) => {
     try {

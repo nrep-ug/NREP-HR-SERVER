@@ -21,8 +21,8 @@ import {
     procurePostBucketId,
 } from '../config/appwrite.js';
 import { getStaff } from '../services/staffService.js'
-import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile } from "../utils/utils.js";
-import { generateUniqueId } from "../utils/procureUtils.js"
+import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile, generateAplaNumericCode, verifyCode, isCodeStillValid } from "../utils/utils.js";
+import * as utils from "../utils/procureUtils.js"
 import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
 import moment from 'moment-timezone';
 
@@ -145,14 +145,16 @@ export const signInStaff = async (data) => {
 };
 
 
-/* SUPPLIER SERVICES */
-
+/* ===== SUPPLIER SERVICES ===== */
+/**
+ * AUTH SERVICES
+ */
 // Supplier Registration
 export const signUpSupplier = async (data) => {
     const file = data.files;
     let supplierData = { ...data.formData };
     const createdAt = currentDateTime;
-    const supplierID = await generateUniqueId('SR');
+    const supplierID = await utils.generateUniqueId('SR');
     console.log('supplierID: ', supplierID);
 
     // Encrypt the password
@@ -246,13 +248,15 @@ export const signInSupplier = async (data) => {
             };
         }
 
+        console.log('User Data: ', userData.documents);
+
         const user = userData.documents[0];
 
         // Assuming password is hashed, compare it with bcrypt
         const passwordMatch = await bcrypt.compare(data.password, user.password);
 
-        if (!passwordMatch || data.email !== user.email) {
-            console.log('Invalid credentials')
+        if (!passwordMatch || data.email !== user.accountEmail) {
+            console.log('Invalid credentials...' + 'PasspasswordMatch: ', passwordMatch, ' ... user email: ', user.accountEmail);
             return {
                 status: false,
                 message: 'Invalid password. Please try again.'
@@ -279,6 +283,85 @@ export const signInSupplier = async (data) => {
     }
 };
 
+// Function to handle the password reset request
+export const handlePasswordResetRequest = async (userEmail) => {
+    console.log('Password reset request: ', userEmail);
+    // Check if email exists
+    const emailExists = await utils.checkEmailExists(userEmail);
+    if (!emailExists.exist) {
+        console.log('Email does not exist in the system.');
+        throw new Error('Email does not exist');
+    }
+
+    // Generate the reset code
+    const resetCode = await generateAplaNumericCode(6);
+
+    // Prepare the email content
+    const emailContent = utils.generateEmailContent(userEmail, resetCode);
+
+    // Send the email
+    const emailSent = await utils.sendPassResetEmail(userEmail, 'Password Reset Request', emailContent, 'help');
+
+    if (emailSent) {
+        console.log('Email sent successfully.');
+
+        // Save the request to passwordReset.json
+        utils.savePasswordResetRequest(userEmail, resetCode);
+    }
+};
+
+// Function to handle code confirmationfor Password Reset
+export const confirmPasswordResetCode = async (userEmail, providedCode) => {
+    const fileName = 'src/data/passwordReset.json'; // Specify the file name
+    const expirationTimeInMinutes = 30; // Set expiration time to 30 minutes
+
+    // Call the helper function to verify the code
+    const isCodeValid = await verifyCode(fileName, expirationTimeInMinutes, userEmail, providedCode);
+
+    if (isCodeValid) {
+        return { success: true, message: 'The code is valid and has been marked as used.' };
+    } else {
+        return { success: false, message: 'Invalid email, code, or the code has expired/been used.' };
+    }
+};
+
+// Function to handle password change
+export const handlePasswordChange = async (code, email, password) => {
+    // Check if the code is valid and has been marked as used
+    const fileName = 'src/data/passwordReset.json'; // Specify the file name
+    const expirationTimeInMinutes = 30; // Set expiration time to 30 minutes
+
+    const codeValid = await isCodeStillValid(fileName, expirationTimeInMinutes, email, code);
+
+    if (!codeValid) {
+        console.log('The code is no longer valid.'); // Inform the user
+        throw new Error('Invalid, code, or the code has expired. Kindly request for another password reset');
+    }
+
+    console.log('Proceed to change the password.'); // Proceed with the password change
+
+    // Check if email exists and only when the length of the documents is equal to 1
+    const emailExists = await utils.checkEmailExists(email);
+    if (!emailExists.exist) {
+        console.log('Email does not exist in the system.');
+        throw new Error('Email does not exist');
+    }
+
+    const supplierID = emailExists.data[0].$id
+
+    // Encrypt the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Modify the password field with the new password
+    const response = await databases.updateDocument(procureDatabaseId, procureSupplierTableId, supplierID, { password: hashedPassword })
+
+    return { success: true, status: 200, data: response };
+};
+
+/**
+ * OTHER SERVICES
+ */
 // Post or Add a service/product
 export const createProcurementPost = async (formData, file) => {
     const createdAt = moment().tz('Africa/Nairobi');

@@ -5,6 +5,9 @@ import {
     getAllServices,
     signUpSupplier,
     signIn,
+    handlePasswordResetRequest,
+    confirmPasswordResetCode,
+    handlePasswordChange,
     // addService,
     createProcurementPost,
     getCategories,
@@ -26,9 +29,15 @@ import upload from '../config/multerConfig2.js'; // Import multer configuration
 
 const router = express.Router();
 
+// Authentication routes
 router.post('/staff-register', signUpStaff) // To implement validateStaff
 router.post('/supplier-register', upload.single('documents'), validateSupplier, signUpSupplier);
 router.post('/sign-in', validateSignIn, signIn);
+router.post('/reset-password', handlePasswordResetRequest) // To implement validatePasswordResetEmail
+router.post('/confirm-password-reset', confirmPasswordResetCode)
+router.post('/set-new-password', handlePasswordChange)
+
+// Other routes
 router.post(
     '/add-service',
     upload.single('otherDocuments'), // Handle single file upload

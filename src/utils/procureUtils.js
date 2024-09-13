@@ -1,5 +1,22 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import nodemailer from 'nodemailer';
+import moment from 'moment-timezone';
+import {
+    storage,
+    databases,
+    Query,
+    ID,
+    procureDatabaseId,
+    procurePostsTableId,
+    procureSupplierApplicationTableId,
+    procureSupplierTableId,
+    procureStaffTableId,
+    procureCategoryTableId,
+    procurePostBucketId,
+} from '../config/appwrite.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const counterFilePath = path.resolve('./src/data/procurementCounter.json'); // Path to the counter file
 const counterDir = path.dirname(counterFilePath); // Directory path
@@ -83,3 +100,91 @@ export async function generateUniqueId(type) {
         throw new Error('Could not generate unique ID');
     }
 }
+
+// Helper function to check if supplier login email exists in the system
+export const checkEmailExists = async (userEmail) => {
+    const response = await databases.listDocuments(
+        procureDatabaseId,
+        procureSupplierTableId,
+        [
+            Query.equal('accountEmail', userEmail)
+        ]
+    )
+
+    console.log('Account Email Check Response: ', response);
+
+    return { exist: response.documents.length === 1, data: response.documents };
+
+};
+
+/**
+ * PASSWORD RESET UTILS
+ */
+// Function to send an email
+export const sendPassResetEmail = async (to, subject, body, type) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.NREP_EMAIL_HOST,
+            port: process.env.NREP_EMAIL_PORT,
+            secure: process.env.NREP_EMAIL_SECURE,
+            auth: {
+                user: process.env.NREP_EMAIL_HELP,
+                pass: process.env.NREP_EMAIL_HELP_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: process.env.NREP_EMAIL_HELP,
+            to,
+            subject,
+            html: body,
+        };
+
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return false;
+    }
+};
+
+// Function to generate the HTML email content
+export const generateEmailContent = (userEmail, resetCode) => {
+    return `
+    <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <h2 style="color: #4CAF50;">Password Reset Request</h2>
+        <p>Hello,</p>
+        <p>You requested a password reset for your account associated with the email address: <strong>${userEmail}</strong>.</p>
+        <p>Your password reset code is: <span style="font-size: 16px; font-weight: bold; color: #FF5722;">${resetCode}</span></p>
+        <p>Please use this code to reset your password. The code will expire in 30 minutes.</p>
+        <p>If you did not request a password reset, please ignore this email or contact our support team.</p>
+        <p>Thank you,</p>
+        <p>NREP IT Support Team</p>
+    </div>
+    `;
+};
+
+// Function to save the password reset request to the JSON file
+export const savePasswordResetRequest = async (userEmail, resetCode) => {
+    const filePath = path.resolve('src/data/passwordReset.json');
+
+    // Use moment-timezone to get the current date and time in the desired format
+    const dateTime = moment().tz('Africa/Nairobi').format('YYYY-MM-DD HH:mm:ss'); // Adjust timezone as needed
+
+    let existingRequests = [];
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        existingRequests = fileContent ? JSON.parse(fileContent) : [];
+    }
+
+    const newRequest = {
+        userEmail,
+        code: resetCode,
+        dateTime,
+        isUsed: false,
+    };
+
+    existingRequests.push(newRequest);
+
+    fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+};

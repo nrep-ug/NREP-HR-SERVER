@@ -1,5 +1,5 @@
 // src/utils/utils.js
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import pool from '../config/mysqlConfig.js';
 import moment from 'moment-timezone';
@@ -169,3 +169,96 @@ export function isNrepUgEmail(email) {
     // Test the email against the regex
     return regex.test(email);
 }
+
+// Function to generate a random 6-character code
+export const generateAplaNumericCode = async (length) => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+};
+
+// Helper function to verify the code from a specific file
+export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, providedCode) => {
+    const filePath = path.resolve(fileName);
+
+    // Read the existing requests from the specified JSON file
+    let existingRequests = [];
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        existingRequests = fileContent ? JSON.parse(fileContent) : [];
+    }
+
+    // Find the request matching the provided email and code
+    const requestIndex = existingRequests.findIndex(
+        (req) => req.userEmail === userEmail && req.code === providedCode
+    );
+
+    if (requestIndex === -1) {
+        return false; // No matching request found
+    }
+
+    const request = existingRequests[requestIndex];
+
+    // Check if the code has already been used
+    if (request.isUsed) {
+        return false; // The code has already been used
+    }
+
+    // Check if the code is expired
+    const codeExpirationTime = moment(request.dateTime).add(expirationTimeInMinutes, 'minutes');
+    const currentTime = moment().tz('Africa/Nairobi');
+
+    if (currentTime.isAfter(codeExpirationTime)) {
+        // Mark the code as expired
+        existingRequests[requestIndex].isUsed = true;
+        fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+        return false; // The code has expired
+    }
+
+    // Mark the code as used
+    existingRequests[requestIndex].isUsed = true;
+    fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+
+    // The code is valid and not expired
+    return true;
+};
+
+// Helper function to verify code time validity and is set to used. [ONLY USED AT PASSWORD CHANGE]
+export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEmail, providedCode) => {
+    const filePath = path.resolve(fileName);
+
+    // Read the existing requests from the specified JSON file
+    let existingRequests = [];
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        existingRequests = fileContent ? JSON.parse(fileContent) : [];
+    }
+
+    // Find the request matching the provided email and code
+    const request = existingRequests.find(
+        (req) => req.userEmail === userEmail && req.code === providedCode
+    );
+
+    if (!request) {
+        return false; // No matching request found
+    }
+
+    // Check if the code was marked as used during initial verification
+    if (!request.isUsed) {
+        return false; // The code was not marked as used
+    }
+
+    // Check if the time validity of the code is still valid
+    const codeExpirationTime = moment(request.dateTime).add(expirationTimeInMinutes, 'minutes');
+    const currentTime = moment().tz('UTC');
+
+    if (currentTime.isAfter(codeExpirationTime)) {
+        return false; // The code is expired
+    }
+
+    // The code is still valid for the final step
+    return true;
+};
