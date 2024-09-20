@@ -33,8 +33,8 @@ const router = express.Router();
 router.post('/staff-register', signUpStaff) // To implement validateStaff
 router.post('/supplier-register', upload.single('documents'), validateSupplier, signUpSupplier);
 router.post('/sign-in', validateSignIn, signIn);
-router.post('/reset-password', handlePasswordResetRequest) // To implement validatePasswordResetEmail
-router.post('/confirm-password-reset', confirmPasswordResetCode)
+router.post('/request-password-reset', handlePasswordResetRequest) // To implement validatePasswordResetEmail
+router.post('/validate-otp-password-reset', confirmPasswordResetCode)
 router.post('/set-new-password', handlePasswordChange)
 
 // Other routes

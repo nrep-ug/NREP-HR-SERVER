@@ -327,6 +327,7 @@ export const confirmPasswordResetCode = async (userEmail, providedCode) => {
 
 // Function to handle password change
 export const handlePasswordChange = async (code, email, password) => {
+    console.log('Setting new password for ', email);
     // Check if the code is valid and has been marked as used
     const fileName = 'src/data/passwordReset.json'; // Specify the file name
     const expirationTimeInMinutes = 30; // Set expiration time to 30 minutes
@@ -356,7 +357,7 @@ export const handlePasswordChange = async (code, email, password) => {
     // Modify the password field with the new password
     const response = await databases.updateDocument(procureDatabaseId, procureSupplierTableId, supplierID, { password: hashedPassword })
 
-    return { success: true, status: 200, data: response };
+    return { success: true, message: 'Password has been changed successfully', status: 200, data: response };
 };
 
 /**

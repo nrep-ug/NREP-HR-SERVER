@@ -86,7 +86,7 @@ export const handlePasswordResetRequest = async (req, res, next) => {
         // Validate the input if necessary
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(400).json({ success: false, message: 'An error occured.', errors: errors.array() });
         }
 
         console.log('Email to reset: ', req.body)
@@ -94,6 +94,7 @@ export const handlePasswordResetRequest = async (req, res, next) => {
         const resetPassword = await procureService.handlePasswordResetRequest(req.body.email);
 
         res.status(201).json({
+            success: true,
             message: `A password reset code has been sent to your email (${req.body.email}).`,
         });
     } catch (error) {
