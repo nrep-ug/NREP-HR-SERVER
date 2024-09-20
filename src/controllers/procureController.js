@@ -83,6 +83,7 @@ export const signIn = async (req, res, next) => {
 // Password Reset
 export const handlePasswordResetRequest = async (req, res, next) => {
     try {
+        console.log('handlePasswordResetRequest invoked');
         // Validate the input if necessary
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
