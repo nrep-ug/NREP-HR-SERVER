@@ -1,5 +1,5 @@
 // src/utils/utils.js
-import fs from 'fs';
+import fs from 'fs/promises'; // Use fs/promises for promise-based file system operations
 import path from 'path';
 import pool from '../config/mysqlConfig.js';
 import moment from 'moment-timezone';
