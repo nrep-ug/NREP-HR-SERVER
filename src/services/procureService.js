@@ -151,6 +151,7 @@ export const signInStaff = async (data) => {
  */
 // Supplier Registration
 export const signUpSupplier = async (data) => {
+    console.log('signing up supplier')
     const file = data.files;
     let supplierData = { ...data.formData };
     const createdAt = currentDateTime;
@@ -209,7 +210,7 @@ export const signUpSupplier = async (data) => {
             newSupplierEntry
         );
     } catch (e) {
-        console.log(e);
+        console.log('Error while signing up supplier: ',e);
 
         // Delete the uploaded file from the database if provided, otherwise
         console.log('Doc uploaded:', newSupplierEntry.document)

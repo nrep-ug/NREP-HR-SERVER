@@ -29,6 +29,7 @@ export const signUpSupplier = async (req, res, next) => {
         // Validate the input if necessary
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log('Error at controller - supplier registration: ', errors)
             return res.status(400).json({ errors: errors.array() });
         }
 
