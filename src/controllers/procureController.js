@@ -241,7 +241,7 @@ export const applyForProcurement = async (req, res, next) => {
 
         const apply = await procureService.handleProcurementApplication(req.files, req.body);
 
-        apply.status === 409 ? res.status(409).json(apply) : res.status(200).json(apply);
+        apply.status === 200 ?  res.status(200).json(apply):res.status(409).json(apply) ;
 
     } catch (error) {
         next(error);

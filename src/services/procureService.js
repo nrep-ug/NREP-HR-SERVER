@@ -366,7 +366,7 @@ export const handlePasswordChange = async (code, email, password) => {
 // Post or Add a service/product
 export const createProcurementPost = async (formData, file) => {
     const createdAt = moment().tz('Africa/Nairobi');
-    const postID = await generateUniqueId('PS');
+    const postID = await utils.generateUniqueId('PS');
 
     // Parse arrays from JSON strings (if passed as JSON strings)
     const deliverables = JSON.parse(formData.deliverables);
@@ -476,6 +476,8 @@ export const getService = async (id) => {
 //Supplier Application for service/product supplying
 export const handleProcurementApplication = async (files, data) => {
     try {
+        console.log('Procurement Application')
+        console.log('Supplier ID: ', data.supplierID)
         // Check if the supplier has already applied for this procurement application
         console.log(`Checking if supplier (${data.supplierID}) already applied for ${data.procurementID}`);
         const ifApplied = await databases.listDocuments(
@@ -541,8 +543,9 @@ export const handleProcurementApplication = async (files, data) => {
 
         // Save to Supplier Application Table
         const createdAt = currentDateTime;
-        const applicationID = await generateUniqueId('PR');
+        const applicationID = await utils.generateUniqueId('PR');
 
+       console.log('proceeding to finish application') 
         const response = await databases.createDocument(
             procureDatabaseId,
             procureSupplierApplicationTableId,
@@ -557,7 +560,7 @@ export const handleProcurementApplication = async (files, data) => {
             }
         );
 
-        console.log('Applied: ', response);
+        console.log('Successfully Applied for the procurement: ', response);
 
         return {
             status: 200,
@@ -566,10 +569,10 @@ export const handleProcurementApplication = async (files, data) => {
         };
     } catch (error) {
         console.error('Error during application submission: ', error);
-        return {
+        throw new Error({
             status: 500,
             message: 'An error occurred during the application submission.',
-        };
+        }) ;
     }
 };
 
@@ -607,7 +610,7 @@ export const getAppliedToServiceData = async (data) => {
 export const addCategory = async (data) => {
     // data format => {name:'', description:''|null, classification:[]|null}
 
-    const catID = await generateUniqueId('CAT')
+    const catID = await utils.generateUniqueId('CAT')
 
     const response = await databases.createDocument(
         procureDatabaseId,
