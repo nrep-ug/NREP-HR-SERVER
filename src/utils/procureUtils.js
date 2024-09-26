@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import moment from 'moment-timezone';
@@ -16,6 +16,7 @@ import {
     procurePostBucketId,
 } from '../config/appwrite.js';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const counterFilePath = path.resolve('./src/data/procurementCounter.json'); // Path to the counter file
