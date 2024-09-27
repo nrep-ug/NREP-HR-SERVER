@@ -5,6 +5,8 @@ import {
     getAllServices,
     signUpSupplier,
     signIn,
+    getAllSuppliers,
+    getAllSuppliersPage,
     handlePasswordResetRequest,
     confirmPasswordResetCode,
     handlePasswordChange,
@@ -21,6 +23,7 @@ import {
 import {
     validateSignIn,
     validateGetAllServices,
+    validateGetAllSuppliers,
     validateSupplier,
     validateProcurementApplication,
 } from '../validations/procureValidation.js';
@@ -36,6 +39,10 @@ router.post('/sign-in', validateSignIn, signIn);
 router.post('/request-password-reset', handlePasswordResetRequest) // To implement validatePasswordResetEmail
 router.post('/validate-otp-password-reset', confirmPasswordResetCode)
 router.post('/set-new-password', handlePasswordChange)
+
+//Supplier related routes
+router.get('/suppliers', validateGetAllSuppliers, getAllSuppliers);
+router.get('/suppliers/pages', getAllSuppliersPage); // Returns paginated list of services
 
 // Other routes
 router.post(

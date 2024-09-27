@@ -59,8 +59,7 @@ export const signUpStaff = async (data) => {
     return response;
 }
 
-// Staff sign-in
-// Staff sign-in function
+// Staff sign-in service
 export const signInStaff = async (data) => {
     /*
     * - Query HR Staff table for staff credentials
@@ -359,6 +358,65 @@ export const handlePasswordChange = async (code, email, password) => {
     const response = await databases.updateDocument(procureDatabaseId, procureSupplierTableId, supplierID, { password: hashedPassword })
 
     return { success: true, message: 'Password has been changed successfully', status: 200, data: response };
+};
+
+/*
+*
+*SERVICES TO RETURN SUPPLIERS AND RELATED INFORMATION
+*/
+// Return all suppliers services/products
+export const getAllSuppliers = async (validated = null, userType = []) => {
+    let query = [Query.limit(100)];
+
+    if (validated===null) {
+        // No additional query since we want all records
+    } else if (validated) {
+        query.push(Query.equal('validate', true));
+    } else if(!validated){
+        query.push(Query.equal('validate', false));
+    }
+
+    //TODO: Will implement the below later in the future
+    if (userType.length === 1) {
+        if (userType.includes('suppliers')) {
+            query.push(Query.equal('userType', 'test'));
+        }
+        else if (userType.includes('test')) {
+            query.push(Query.equal('userType', 'test'));
+        }
+    }
+
+    const response = await databases.listDocuments(
+        procureDatabaseId,
+        procureSupplierTableId,
+        query
+    );
+
+    return response.documents;
+};
+
+// Return all suppliers service function
+export const getAllSuppliersPage = async (data) => {
+    const limit = 8;
+    const page = data.page;
+    const offset = (page - 1) * limit;
+
+    const documents = await databases.listDocuments(
+        procureDatabaseId,
+        procureSupplierTableId,
+        [
+            Query.limit(limit),
+            Query.offset(offset),
+        ]
+    );
+
+    // Respond with the fetched documents and pagination info
+    return ({
+        documents: documents.documents,
+        currentPage: page || 1,
+        hasNextPage: documents.documents.length === limit,
+        totalDocuments: documents.total,
+    });
 };
 
 /**

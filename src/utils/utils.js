@@ -9,6 +9,7 @@ import {
     ID,
     procurePostBucketId,
 } from '../config/appwrite.js';
+import fsSync from 'fs'; // Import the regular fs module for synchronous operations
 
 // DATE/TIME
 export const currentDateTime = moment().tz('Africa/Nairobi');
@@ -186,8 +187,8 @@ export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, p
 
     // Read the existing requests from the specified JSON file
     let existingRequests = [];
-    if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf8');
+    if (fsSync.existsSync(filePath)) { // Use fsSync.existsSync
+        const fileContent = await fs.readFile(filePath, 'utf8'); // Use fs.promises.readFile
         existingRequests = fileContent ? JSON.parse(fileContent) : [];
     }
 
@@ -214,13 +215,13 @@ export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, p
     if (currentTime.isAfter(codeExpirationTime)) {
         // Mark the code as expired
         existingRequests[requestIndex].isUsed = true;
-        fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+        await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8'); // Use fs.promises.writeFile
         return false; // The code has expired
     }
 
     // Mark the code as used
     existingRequests[requestIndex].isUsed = true;
-    fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+    await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8'); // Use fs.promises.writeFile
 
     // The code is valid and not expired
     return true;
@@ -232,8 +233,8 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 
     // Read the existing requests from the specified JSON file
     let existingRequests = [];
-    if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf8');
+    if (fsSync.existsSync(filePath)) { // Use fsSync.existsSync
+        const fileContent = await fs.readFile(filePath, 'utf8'); // Use fs.promises.readFile
         existingRequests = fileContent ? JSON.parse(fileContent) : [];
     }
 

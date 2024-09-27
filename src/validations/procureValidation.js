@@ -57,6 +57,16 @@ export const validateSignIn = [
         .notEmpty().withMessage('Email is required'),
 ];
 
+export const validateGetAllSuppliers = [
+    query('all')
+        .optional()
+        .isBoolean().withMessage('The "validated" parameter must be a boolean'),
+
+    query('expired')
+        .optional()
+        .isArray().withMessage('The "userType" parameter must be an array'),
+];
+
 export const validateGetAllServices = [
     query('all')
         .optional()

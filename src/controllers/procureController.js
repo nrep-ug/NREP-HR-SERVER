@@ -213,6 +213,51 @@ export const getAllServicesPage = async (req, res, next) => {
     }
 };
 
+// Return suppliers
+export const getAllSuppliers = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        console.log('Fetching suppliers: ', req.query)
+
+        // Destructure and set default values
+        const { validated = null, userType = [] } = req.query;
+
+        // Convert 'validated' from string to boolean and pass to the service
+        const procure = await procureService.getAllSuppliers(
+            supplierValidated = validated === 'true' ? true : validated===null ? null : false,       // 'true' string becomes true, others become false
+            userType,
+        );
+
+        res.status(200).json(procure);
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Return valid or non-expired services by pagination
+export const getAllSuppliersPage = async (req, res, next) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { page } = req.query;
+
+        const procure = await procureService.getAllSuppliersPage({ page })
+
+        res.status(200).json(procure);
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 //TODO: Implement creation of a category
 
 // Return categories

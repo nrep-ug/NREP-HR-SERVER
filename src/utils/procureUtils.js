@@ -16,6 +16,7 @@ import {
     procurePostBucketId,
 } from '../config/appwrite.js';
 import dotenv from 'dotenv';
+import fsSync from 'fs'; // Import the regular fs module for synchronous operations
 
 dotenv.config();
 
@@ -173,8 +174,8 @@ export const savePasswordResetRequest = async (userEmail, resetCode) => {
     const dateTime = moment().tz('Africa/Nairobi').format('YYYY-MM-DD HH:mm:ss'); // Adjust timezone as needed
 
     let existingRequests = [];
-    if (fs.existsSync(filePath)) {
-        const fileContent = fs.readFileSync(filePath, 'utf8');
+    if (fsSync.existsSync(filePath)) { // Use fsSync.existsSync
+        const fileContent = await fs.readFile(filePath, 'utf8'); // Use fs.promises.readFile
         existingRequests = fileContent ? JSON.parse(fileContent) : [];
     }
 
@@ -187,5 +188,5 @@ export const savePasswordResetRequest = async (userEmail, resetCode) => {
 
     existingRequests.push(newRequest);
 
-    fs.writeFileSync(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
+    await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8'); // Use fs.promises.writeFile
 };
