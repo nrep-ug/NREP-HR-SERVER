@@ -258,6 +258,20 @@ export const getAllSuppliersPage = async (req, res, next) => {
     }
 };
 
+// Get a supplier
+export const getSupplier = async (req, res, next) => {
+    try {
+        console.log('Getting supplier information: ', req.params)
+        const supplier = await procureService.getSupplier(req.params.supplierID);
+        if (!supplier) {
+            return res.status(404).json({ message: 'Supplier not found' });
+        }
+        res.status(200).json(supplier);
+    } catch (error) {
+        next(error);
+    }
+};
+
 //TODO: Implement creation of a category
 
 // Return categories

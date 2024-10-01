@@ -419,6 +419,19 @@ export const getAllSuppliersPage = async (data) => {
     });
 };
 
+// Return information about a specific supplier
+export const getSupplier = async (id) => {
+    const response = await databases.getDocument(
+        procureDatabaseId,
+        procureSupplierTableId,
+        id
+    )
+
+    // console.log('supplier: ', response);
+
+    return response
+}
+
 /**
  * OTHER SERVICES
  */

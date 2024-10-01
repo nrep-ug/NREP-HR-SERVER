@@ -7,6 +7,7 @@ import {
     signIn,
     getAllSuppliers,
     getAllSuppliersPage,
+    getSupplier,
     handlePasswordResetRequest,
     confirmPasswordResetCode,
     handlePasswordChange,
@@ -42,7 +43,8 @@ router.post('/set-new-password', handlePasswordChange)
 
 //Supplier related routes
 router.get('/suppliers', validateGetAllSuppliers, getAllSuppliers);
-router.get('/suppliers/pages', getAllSuppliersPage); // Returns paginated list of services
+router.get('/suppliers/pages', getAllSuppliersPage); // Returns paginated list of suppliers
+router.get('/get-supplier/:supplierID', getSupplier);
 
 // Other routes
 router.post(
