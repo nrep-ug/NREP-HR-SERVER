@@ -401,6 +401,7 @@ export const getAllSuppliersPage = async (data) => {
     const page = data.page;
     const offset = (page - 1) * limit;
 
+    // Fetch the supplier documents
     const documents = await databases.listDocuments(
         procureDatabaseId,
         procureSupplierTableId,
@@ -410,13 +411,34 @@ export const getAllSuppliersPage = async (data) => {
         ]
     );
 
+    // Iterate over each supplier document to fetch the number of applications
+    const suppliersWithApplications = await Promise.all(documents.documents.map(async (supplier) => {
+        // Query the supplier application table to get the number of applications for this supplier
+        const applicationResponse = await databases.listDocuments(
+            procureDatabaseId,
+            procureSupplierApplicationTableId,
+            [
+                Query.equal('supplierID', supplier.supplierID),
+                Query.limit(50)
+            ]
+        );
+
+        console.log(`Applications for ${supplier.supplierID}:/n`, applicationResponse)
+
+        // Append the number of applications to the supplier object
+        return {
+            ...supplier,
+            applications: applicationResponse.total // Add the total number of applications
+        };
+    }));
+
     // Respond with the fetched documents and pagination info
-    return ({
-        documents: documents.documents,
+    return {
+        documents: suppliersWithApplications,
         currentPage: page || 1,
         hasNextPage: documents.documents.length === limit,
         totalDocuments: documents.total,
-    });
+    };
 };
 
 // Return information about a specific supplier
