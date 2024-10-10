@@ -54,7 +54,7 @@ router.post(
 ); // Validation to be created
 router.get('/get-service/:procureID', getService);
 router.get('/services', validateGetAllServices, getAllServices);
-router.get('/serivces/pages', getAllServicesPage); // Returns paginated list of services
+router.get('/services/pages/status', getAllServicesPage); // Returns paginated list of services
 
 router.post(
     '/apply',

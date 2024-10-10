@@ -541,18 +541,26 @@ export const getAllServicesPage = async (data) => {
     const page = data.page || 1;
     const offset = (page - 1) * limit;
 
+    const statuses = data.statuses ?? null;
+
+    console.log('Statuses:', statuses);
+
+    // Build query conditions
+    const queries = [
+        Query.limit(limit),
+        Query.offset(offset),
+        Query.orderDesc('createdAt'), // Order by creation date
+    ];
+
+    if (statuses && Array.isArray(statuses) && statuses.length > 0) {
+        queries.push(Query.equal('status', statuses));
+    }
+
     const documents = await databases.listDocuments(
         procureDatabaseId,
         procurePostsTableId,
-        [
-            Query.equal('status', 'active'),
-            Query.limit(limit),
-            Query.offset(offset),
-            Query.orderDesc('createdAt'), // Order by creation date
-        ]
+        queries
     );
-
-    console.log(documents)
 
     return {
         documents: documents.documents,
@@ -561,6 +569,7 @@ export const getAllServicesPage = async (data) => {
         totalDocuments: documents.total,
     };
 };
+
 
 // Return information about a specific posted service/product
 export const getService = async (id) => {

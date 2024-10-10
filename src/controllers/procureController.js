@@ -197,14 +197,40 @@ export const getAllServices = async (req, res, next) => {
 // Return valid or non-expired services by pagination
 export const getAllServicesPage = async (req, res, next) => {
     try {
-        const errors = validationResult(req);
+        const errors = validationResult(req); // Assuming you use express-validator
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { page } = req.query;
+        let { page, statuses } = req.query;
 
-        const procure = await procureService.getAllServicesPage({ page })
+        // Ensure `statuses` is an array
+        if (statuses) {
+            if (Array.isArray(statuses)) {
+                // statuses is already an array
+                statuses = statuses;
+            } else if (typeof statuses === 'string') {
+                // statuses is a single value, convert it to an array
+                statuses = [statuses];
+            } else {
+                // Invalid format
+                statuses = null;
+            }
+        } else {
+            statuses = null;
+        }
+
+        // Optional: Validate statuses
+        if (statuses && Array.isArray(statuses)) {
+            const validStatuses = ['active', 'pending', 'closed'];
+            const invalidStatuses = statuses.filter((status) => !validStatuses.includes(status));
+
+            if (invalidStatuses.length > 0) {
+                return res.status(400).json({ error: `Invalid status values: ${invalidStatuses.join(', ')}` });
+            }
+        }
+
+        const procure = await procureService.getAllServicesPage({ page, statuses });
 
         res.status(200).json(procure);
 
@@ -247,9 +273,9 @@ export const getAllSuppliersPage = async (req, res, next) => {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { page } = req.query;
+        const { page, status } = req.query;
 
-        const procure = await procureService.getAllSuppliersPage({ page })
+        const procure = await procureService.getAllSuppliersPage({ page, status })
 
         res.status(200).json(procure);
 
