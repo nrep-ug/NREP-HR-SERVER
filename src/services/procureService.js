@@ -530,28 +530,36 @@ export const getAllServices = async (all = false, expired = false, status = null
     return response.documents;
 };
 
-// Return all valid posted services/products as paginations
+// SERVICE: Return all valid posted procurement opportunities as paginations
+/**
+ * RETURNS ONLY NONE-EXPIRED PROCUREMENT POSTS
+ * @param {object}
+ * @returns {object}
+ */
 export const getAllServicesPage = async (data) => {
     const limit = 8;
-    const page = data.page;
+    const page = data.page || 1;
     const offset = (page - 1) * limit;
 
     const documents = await databases.listDocuments(
         procureDatabaseId,
-        procurePostsTableId, // Replace with your collection ID
+        procurePostsTableId,
         [
+            Query.equal('status', 'active'),
             Query.limit(limit),
             Query.offset(offset),
+            Query.orderDesc('createdAt'), // Order by creation date
         ]
     );
 
-    // Respond with the fetched documents and pagination info
-    return ({
+    console.log(documents)
+
+    return {
         documents: documents.documents,
-        currentPage: page || 1,
+        currentPage: page,
         hasNextPage: documents.documents.length === limit,
-        totalDocuments: documents.total, // Assuming the API provides total count
-    });
+        totalDocuments: documents.total,
+    };
 };
 
 // Return information about a specific posted service/product
