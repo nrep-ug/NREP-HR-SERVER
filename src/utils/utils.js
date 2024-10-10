@@ -111,7 +111,11 @@ export const uploadFile2 = async (file, fileInfo) => {
 
 // Appwrite File Preview
 export const appwriteFileView = async (fileId, bucketId) => {
-    const result = await storage.getFileView(
+    // const result = await storage.getFileView(
+    //     bucketId,
+    //     fileId
+    // )
+    const result = await storage.getFileDownload(
         bucketId,
         fileId
     )
