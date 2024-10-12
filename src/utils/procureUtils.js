@@ -167,7 +167,7 @@ export const generateEmailContent = (userEmail, resetCode) => {
 };
 
 // Function to generate email content for status updates with disclaimer
-export const generateStatusUpdateEmailContent = (supplierName, applicationID, status, comments) => {
+export const generateStatusUpdateEmailContent = (procureRefNo, supplierName, applicationID, status, comments) => {
     const statusMessages = {
       pending: 'Your application is currently pending review.',
       under_review: 'Your application is under review.',
@@ -266,6 +266,7 @@ export const generateStatusUpdateEmailContent = (supplierName, applicationID, st
               <div class="content">
                   <p>Dear ${supplierName},</p>
                   <p>${message}</p>
+                  <p><strong>Procurement Reference Number:</strong> ${procureRefNo}</p>
                   <p><strong>Application ID:</strong> ${applicationID}</p>
                   ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
                   <div class="button-container">

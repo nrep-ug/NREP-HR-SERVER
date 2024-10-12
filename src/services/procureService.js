@@ -747,6 +747,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
           updatedAt: currentDateTime,
         }
       );
+    //   console.log('Updated application in DB: ', updatedApplication)
+    const procureRefNo = updatedApplication.postID
   
       // Send email notification to the supplier about the status update
       // Retrieve supplier's email using application.supplierID
@@ -761,6 +763,7 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
   
       // Generate email content
       const { html, text } = utils.generateStatusUpdateEmailContent(
+        procureRefNo,
         supplierName,
         applicationID,
         status,
@@ -770,9 +773,11 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
       // Send the email
       await sendEmail({
         to: supplierEmail,
-        subject: 'Your Application Status Has Been Updated',
+        subject: 'Your Procurement Application Status Has Been Updated',
         html,
         text,
+        replyTo: 'nrep.memd@gmail.com',
+        department: 'Procurement'
       });
   
       return updatedApplication;

@@ -270,7 +270,7 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 };
 
 // Email sending function
-export const sendEmail = async ({ to, subject, html, text, replyTo }) => {
+export const sendEmail = async ({ to, subject, html, text, replyTo, department=null }) => {
     try {
       // Create a transporter object using SMTP transport
       const transporter = nodemailer.createTransport({
@@ -285,7 +285,7 @@ export const sendEmail = async ({ to, subject, html, text, replyTo }) => {
   
       // Set up email data
       const mailOptions = {
-        from: `"Procurement Department - National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
+        from: `"${department !==null && department + 'Department - '}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
         to, // Recipient(s)
         subject, // Subject line
         text, // Plain text body
