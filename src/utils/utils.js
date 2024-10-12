@@ -269,40 +269,59 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
     return true;
 };
 
-// Email sending function
-export const sendEmail = async ({ to, subject, html, text, replyTo, department=null }) => {
+// Email sending function with CC and BCC options
+export const sendEmail = async ({
+    to,
+    subject,
+    html,
+    text,
+    replyTo,
+    department = null,
+    cc = null,
+    bcc = null,
+}) => {
     try {
-      // Create a transporter object using SMTP transport
-      const transporter = nodemailer.createTransport({
-        host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
-        port: process.env.NREP_EMAIL_PORT, // e.g., 587
-        secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
-        auth: {
-          user: process.env.NREP_EMAIL_INFO, // Your email address
-          pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
-        },
-      });
-  
-      // Set up email data
-      const mailOptions = {
-        from: `"${department !==null && department + 'Department - '}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
-        to, // Recipient(s)
-        subject, // Subject line
-        text, // Plain text body
-        html, // HTML body
-        replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
-      };
-  
-      // Send mail
-      const info = await transporter.sendMail(mailOptions);
-  
-      console.log('Email sent: %s', info.messageId);
-      return {
-        success: true,
-        messageId: info.messageId,
-      };
+        // Create a transporter object using SMTP transport
+        const transporter = nodemailer.createTransport({
+            host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
+            port: process.env.NREP_EMAIL_PORT, // e.g., 587
+            secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
+            auth: {
+                user: process.env.NREP_EMAIL_INFO, // Your email address
+                pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
+            },
+        });
+
+        // Set up email data
+        const mailOptions = {
+            from: `"${department !== null ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
+            to, // Recipient(s)
+            subject, // Subject line
+            text, // Plain text body
+            html, // HTML body
+            replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
+        };
+
+        // Conditionally add CC if provided
+        if (cc) {
+            mailOptions.cc = cc;
+        }
+
+        // Conditionally add BCC if provided
+        if (bcc) {
+            mailOptions.bcc = bcc;
+        }
+
+        // Send mail
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log('Email sent: %s', info.messageId);
+        return {
+            success: true,
+            messageId: info.messageId,
+        };
     } catch (error) {
-      console.error('Error sending email:', error);
-      throw error;
+        console.error('Error sending email:', error);
+        throw error;
     }
-  };
+};

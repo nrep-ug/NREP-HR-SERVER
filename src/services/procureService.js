@@ -777,7 +777,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
         html,
         text,
         replyTo: 'nrep.memd@gmail.com',
-        department: 'Procurement'
+        department: 'Procurement',
+        cc: ['nrep.memd@gmail.com']
       });
   
       return updatedApplication;
