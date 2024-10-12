@@ -722,79 +722,90 @@ export const getAppliedToServiceData = async (data) => {
 // Function to update the application status in the database
 export const updateApplicationStatusInDB = async (applicationID, status, comments) => {
     try {
-      // Fetch the existing application
-      const application = await databases.getDocument(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
-        applicationID
-      );
-  
-      if (!application) {
-        throw {
-          status: 404,
-          message: 'Application not found.',
-        };
-      }
-  
-      // Update the application with the new status and comments
-      const updatedApplication = await databases.updateDocument(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
-        applicationID,
-        {
-          status,
-          comments,
-          updatedAt: currentDateTime,
+        // Fetch the existing application
+        const application = await databases.getDocument(
+            procureDatabaseId,
+            procureSupplierApplicationTableId,
+            applicationID
+        );
+
+        if (!application) {
+            throw {
+                status: 404,
+                message: 'Application not found.',
+            };
         }
-      );
-    //   console.log('Updated application in DB: ', updatedApplication)
-    const procureRefNo = updatedApplication.postID
-  
-      // Send email notification to the supplier about the status update
-      // Retrieve supplier's email using application.supplierID
-      console.log('Supplier ID: ', application.supplierID)
-      const supplier = await databases.getDocument(
-        procureDatabaseId,
-        procureSupplierTableId,
-        application.supplierID
-      );
-      const supplierEmail = supplier.email;
-      const contactPersonEmail = supplier.contactPersonEmail
-      const supplierName = supplier.contactPerson || supplier.name;
-  
-      // Generate email content
-      const { html, text } = utils.generateStatusUpdateEmailContent(
-        procureRefNo,
-        supplierName,
-        applicationID,
-        status,
-        comments
-      );
-  
-      // Send the email
-      await sendEmail({
-        to: supplierEmail,
-        subject: 'Your Procurement Application Status Has Been Updated',
-        html,
-        text,
-        replyTo: 'nrep.memd@gmail.com',
-        department: 'Procurement',
-        cc: ['nrep.memd@gmail.com',contactPersonEmail]
-      });
-  
-      return updatedApplication;
+
+        // Update the application with the new status and comments
+        const updatedApplication = await databases.updateDocument(
+            procureDatabaseId,
+            procureSupplierApplicationTableId,
+            applicationID,
+            {
+                status,
+                comments,
+                updatedAt: currentDateTime,
+            }
+        );
+        //   console.log('Updated application in DB: ', updatedApplication)
+        const procureRefNo = updatedApplication.postID
+
+        // Fetch the procurement details
+
+        const procureDetails = await databases.getDocument(
+            procureDatabaseId,
+            procurePostsTableId,
+            procureRefNo
+        )
+
+        const procureTitle = procureDetails.title
+
+        // Send email notification to the supplier about the status update
+        // Retrieve supplier's email using application.supplierID
+        console.log('Supplier ID: ', application.supplierID)
+        const supplier = await databases.getDocument(
+            procureDatabaseId,
+            procureSupplierTableId,
+            application.supplierID
+        );
+        const supplierEmail = supplier.email;
+        const contactPersonEmail = supplier.contactPersonEmail
+        const supplierName = supplier.contactPerson || supplier.name;
+
+        // Generate email content
+        const { html, text } = utils.generateStatusUpdateEmailContent(
+            procureRefNo,
+            procureTitle,
+            supplierName,
+            applicationID,
+            status,
+            comments
+        );
+
+        // Send the email
+        await sendEmail({
+            to: supplierEmail,
+            subject: `${procureTitle}: Your Procurement Application Status Has Been Updated`,
+            html,
+            text,
+            replyTo: 'nrep.memd@gmail.com',
+            department: 'Procurement',
+            cc: ['nrep.memd@gmail.com', contactPersonEmail]
+        });
+
+        return updatedApplication;
     } catch (error) {
-      console.error('Error updating application status:', error);
-      if (error.status) {
-        throw error;
-      } else {
-        throw {
-          status: 500,
-          message: 'An error occurred while updating the application status.',
-        };
-      }
+        console.error('Error updating application status:', error);
+        if (error.status) {
+            throw error;
+        } else {
+            throw {
+                status: 500,
+                message: 'An error occurred while updating the application status.',
+            };
+        }
     }
-  };
+};
 
 // Add or Create a new category
 export const addCategory = async (data) => {
