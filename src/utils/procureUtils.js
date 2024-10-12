@@ -166,6 +166,44 @@ export const generateEmailContent = (userEmail, resetCode) => {
     `;
 };
 
+// Function to generate email content for status updates
+export const generateStatusUpdateEmailContent = (supplierName, applicationID, status, comments) => {
+    const statusMessages = {
+      pending: 'Your application is currently pending review.',
+      under_review: 'Your application is under review.',
+      approved: 'Congratulations! Your application has been approved.',
+      rejected: 'We regret to inform you that your application has been rejected.',
+      on_hold: 'Your application is currently on hold.',
+      needs_more_info: 'We need more information to proceed with your application.',
+    };
+  
+    const message = statusMessages[status] || 'Your application status has been updated.';
+  
+    const html = `
+      <p>Dear ${supplierName},</p>
+      <p>${message}</p>
+      <p><strong>Application ID:</strong> ${applicationID}</p>
+      ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
+      <p>Best regards,<br>Your Company Name</p>
+    `;
+  
+    const text = `
+      Dear ${supplierName},
+  
+      ${message}
+  
+      Application ID: ${applicationID}
+  
+      ${comments ? `Comments: ${comments}` : ''}
+  
+      Best regards,
+      Procurent Department,
+      National Renewable Energy Platform (NREP)
+    `;
+  
+    return { html, text };
+  };
+
 // Function to save the password reset request to the JSON file
 export const savePasswordResetRequest = async (userEmail, resetCode) => {
     const filePath = path.resolve('src/data/passwordReset.json');

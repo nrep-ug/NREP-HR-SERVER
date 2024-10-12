@@ -1,8 +1,9 @@
 // src/utils/utils.js
 import fs from 'fs/promises'; // Use fs/promises for promise-based file system operations
 import path from 'path';
-import pool from '../config/mysqlConfig.js';
 import moment from 'moment-timezone';
+import nodemailer from 'nodemailer';
+import pool from '../config/mysqlConfig.js';
 import { InputFile } from 'node-appwrite/file'
 import {
     storage,
@@ -267,3 +268,41 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
     // The code is still valid for the final step
     return true;
 };
+
+// Email sending function
+export const sendEmail = async ({ to, subject, html, text, replyTo }) => {
+    try {
+      // Create a transporter object using SMTP transport
+      const transporter = nodemailer.createTransport({
+        host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
+        port: process.env.NREP_EMAIL_PORT, // e.g., 587
+        secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
+        auth: {
+          user: process.env.NREP_EMAIL_INFO, // Your email address
+          pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
+        },
+      });
+  
+      // Set up email data
+      const mailOptions = {
+        from: `"Procurement Department - National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
+        to, // Recipient(s)
+        subject, // Subject line
+        text, // Plain text body
+        html, // HTML body
+        replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
+      };
+  
+      // Send mail
+      const info = await transporter.sendMail(mailOptions);
+  
+      console.log('Email sent: %s', info.messageId);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw error;
+    }
+  };

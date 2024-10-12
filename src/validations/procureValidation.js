@@ -1,5 +1,5 @@
-// src\validations\procureValidation.js
-import { body, query, validationResult } from 'express-validator';
+// src/validations/procureValidation.js
+import { body, query, param, validationResult } from 'express-validator';
 
 export const validateSupplier = [
     body('name')
@@ -95,4 +95,24 @@ export const validateProcurementApplication = [
         }
         next();
     },
+];
+
+// Validation for updating application status
+export const validateUpdateApplicationStatus = [
+    param('applicationID')
+        .notEmpty()
+        .withMessage('Application ID is required.')
+        .isString()
+        .withMessage('Application ID must be a string.'),
+    body('status')
+        .notEmpty()
+        .withMessage('Status is required.')
+        .isIn(['pending', 'under_review', 'approved', 'rejected', 'on_hold', 'needs_more_info'])
+        .withMessage('Invalid status value.'),
+    body('comments')
+        .optional()
+        .isString()
+        .withMessage('Comments must be a string.')
+        .trim()
+        .escape(),
 ];

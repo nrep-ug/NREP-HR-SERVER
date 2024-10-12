@@ -1,4 +1,4 @@
-// src\routes\procureRoutes.js
+// src/routes/procureRoutes.js
 import express from 'express';
 import {
     signUpStaff,
@@ -19,6 +19,7 @@ import {
     applyForProcurement,
     getAppliedToServices,
     getAppliedToServiceData,
+    updateApplicationStatus,
     viewFile
 } from '../controllers/procureController.js';
 import {
@@ -27,6 +28,7 @@ import {
     validateGetAllSuppliers,
     validateSupplier,
     validateProcurementApplication,
+    validateUpdateApplicationStatus,
 } from '../validations/procureValidation.js';
 
 import upload from '../config/multerConfig2.js'; // Import multer configuration
@@ -71,6 +73,7 @@ router.post(
 
 router.get('/applied', getAppliedToServices);
 router.get('/applied/service-details', getAppliedToServiceData);
+router.put('/applied/:applicationID/status-update', validateUpdateApplicationStatus, updateApplicationStatus);
 
 router.get('/document/view/:fileId', viewFile)
 

@@ -1,3 +1,4 @@
+// src/controllers/procureController.js
 import { validationResult } from 'express-validator';
 import * as procureService from '../services/procureService.js';
 import mime from 'mime-types'
@@ -117,7 +118,6 @@ export const confirmPasswordResetCode = async (req, res, next) => {
         next(error);
     }
 };
-
 
 // Handle Password Modification/Change with new password
 export const handlePasswordChange = async (req, res, next) => {
@@ -299,7 +299,6 @@ export const getSupplier = async (req, res, next) => {
 };
 
 //TODO: Implement creation of a category
-
 // Return categories
 export const getCategories = async (req, res, next) => {
     try {
@@ -363,6 +362,32 @@ export const getAppliedToServiceData = async (req, res, next) => {
         res.status(200).json(procure);
 
     } catch (error) {
+        next(error);
+    }
+};
+
+// Controller function to update application status
+export const updateApplicationStatus = async (req, res, next) => {
+    try {
+        // Validate incoming request
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { applicationID } = req.params;
+        const { status, comments } = req.body;
+
+        // Call the service function to update the application status
+        const updatedApplication = await procureService.updateApplicationStatusInDB(applicationID, status, comments);
+
+        res.status(200).json({
+            success: true,
+            message: 'Application status updated successfully.',
+            data: updatedApplication,
+        });
+    } catch (error) {
+        console.error('Error in updateApplicationStatus controller:', error);
         next(error);
     }
 };

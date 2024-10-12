@@ -3,6 +3,8 @@
  *  - Set all the expirations at either midnight, or 18:00 from the client side
  *  - Create a function that checks and updates the post `status` every midnight hour after the expiration date
  */
+
+// src/services/procureService.js
 import fs from 'fs';
 import path from 'path';
 import {
@@ -22,6 +24,7 @@ import {
 } from '../config/appwrite.js';
 import { getStaff } from '../services/staffService.js'
 import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile, generateAplaNumericCode, verifyCode, isCodeStillValid } from "../utils/utils.js";
+import { sendEmail } from '../utils/utils.js';
 import * as utils from "../utils/procureUtils.js"
 import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
 import moment from 'moment-timezone';
@@ -209,7 +212,7 @@ export const signUpSupplier = async (data) => {
             newSupplierEntry
         );
     } catch (e) {
-        console.log('Error while signing up supplier: ',e);
+        console.log('Error while signing up supplier: ', e);
 
         // Delete the uploaded file from the database if provided, otherwise
         console.log('Doc uploaded:', newSupplierEntry.document)
@@ -368,11 +371,11 @@ export const handlePasswordChange = async (code, email, password) => {
 export const getAllSuppliers = async (validated = null, userType = []) => {
     let query = [Query.limit(100)];
 
-    if (validated===null) {
+    if (validated === null) {
         // No additional query since we want all records
     } else if (validated) {
         query.push(Query.equal('validate', true));
-    } else if(!validated){
+    } else if (!validated) {
         query.push(Query.equal('validate', false));
     }
 
@@ -570,7 +573,6 @@ export const getAllServicesPage = async (data) => {
     };
 };
 
-
 // Return information about a specific posted service/product
 export const getService = async (id) => {
     const response = await databases.getDocument(
@@ -656,7 +658,7 @@ export const handleProcurementApplication = async (files, data) => {
         const createdAt = currentDateTime;
         const applicationID = await utils.generateUniqueId('PR');
 
-       console.log('proceeding to finish application') 
+        console.log('proceeding to finish application')
         const response = await databases.createDocument(
             procureDatabaseId,
             procureSupplierApplicationTableId,
@@ -683,7 +685,7 @@ export const handleProcurementApplication = async (files, data) => {
         throw new Error({
             status: 500,
             message: 'An error occurred during the application submission.',
-        }) ;
+        });
     }
 };
 
@@ -716,6 +718,76 @@ export const getAppliedToServiceData = async (data) => {
 
     return response.documents
 }
+
+// Function to update the application status in the database
+export const updateApplicationStatusInDB = async (applicationID, status, comments) => {
+    try {
+      // Fetch the existing application
+      const application = await databases.getDocument(
+        procureDatabaseId,
+        procureSupplierApplicationTableId,
+        applicationID
+      );
+  
+      if (!application) {
+        throw {
+          status: 404,
+          message: 'Application not found.',
+        };
+      }
+  
+      // Update the application with the new status and comments
+      const updatedApplication = await databases.updateDocument(
+        procureDatabaseId,
+        procureSupplierApplicationTableId,
+        applicationID,
+        {
+          status,
+          comments,
+          updatedAt: currentDateTime,
+        }
+      );
+  
+      // Send email notification to the supplier about the status update
+      // Retrieve supplier's email using application.supplierID
+      console.log('Supplier ID: ', application.supplierID)
+      const supplier = await databases.getDocument(
+        procureDatabaseId,
+        procureSupplierTableId,
+        application.supplierID
+      );
+      const supplierEmail = supplier.email;
+      const supplierName = supplier.contactPerson || supplier.name;
+  
+      // Generate email content
+      const { html, text } = utils.generateStatusUpdateEmailContent(
+        supplierName,
+        applicationID,
+        status,
+        comments
+      );
+  
+      // Send the email
+      await sendEmail({
+        to: supplierEmail,
+        subject: 'Your Application Status Has Been Updated',
+        html,
+        text,
+      });
+  
+      return updatedApplication;
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      if (error.status) {
+        throw error;
+      } else {
+        throw {
+          status: 500,
+          message: 'An error occurred while updating the application status.',
+        };
+      }
+    }
+  };
 
 // Add or Create a new category
 export const addCategory = async (data) => {
