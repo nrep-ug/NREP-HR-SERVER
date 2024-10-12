@@ -166,7 +166,7 @@ export const generateEmailContent = (userEmail, resetCode) => {
     `;
 };
 
-// Function to generate email content for status updates
+// Function to generate email content for status updates with disclaimer
 export const generateStatusUpdateEmailContent = (supplierName, applicationID, status, comments) => {
     const statusMessages = {
       pending: 'Your application is currently pending review.',
@@ -179,30 +179,138 @@ export const generateStatusUpdateEmailContent = (supplierName, applicationID, st
   
     const message = statusMessages[status] || 'Your application status has been updated.';
   
+    // Define the disclaimer text
+    const disclaimer = `
+      <p style="font-size:12px; color:#777777; margin-top:20px; border-top:1px solid #e0e0e0; padding-top:10px;">
+        This email and any attachments are intended solely for the use of the individual or entity to whom they are addressed and may contain confidential and privileged information. If you are not the intended recipient, please notify the sender immediately and delete this email from your system. Any unauthorized use, disclosure, or distribution is prohibited.
+      </p>
+    `;
+  
     const html = `
-      <p>Dear ${supplierName},</p>
-      <p>${message}</p>
-      <p><strong>Application ID:</strong> ${applicationID}</p>
-      ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
-      <p>Best regards,<br>Your Company Name</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Application Status Update</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f4f4f4;
+                  margin: 0;
+                  padding: 0;
+              }
+              .container {
+                  width: 100%;
+                  max-width: 600px;
+                  margin: 0 auto;
+                  background-color: #ffffff;
+                  padding: 20px;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .header {
+                  text-align: center;
+                  padding-bottom: 20px;
+                  border-bottom: 1px solid #e0e0e0;
+                  background-color: #ffffff;
+              }
+              .header img {
+                  max-width: 150px;
+              }
+              .content {
+                  padding: 20px 0;
+              }
+              .content p {
+                  line-height: 1.6;
+                  color: #333333;
+              }
+              .button-container {
+                  text-align: center;
+                  margin: 30px 0;
+              }
+              .button {
+                  background-color: #007BFF;
+                  color: #ffffff;
+                  padding: 12px 25px;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-size: 16px;
+              }
+              .button:hover {
+                  background-color: #0056b3;
+              }
+              .footer {
+                  text-align: center;
+                  font-size: 12px;
+                  color: #777777;
+                  border-top: 1px solid #e0e0e0;
+                  padding-top: 20px;
+                  margin-top: 20px;
+              }
+              @media only screen and (max-width: 600px) {
+                  .container {
+                      padding: 15px;
+                  }
+                  .button {
+                      width: 100%;
+                      box-sizing: border-box;
+                  }
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <img src="https://supplies.nrep.ug/images/NREP-WHITE.jpg" alt="Company Logo">
+              </div>
+              <div class="content">
+                  <p>Dear ${supplierName},</p>
+                  <p>${message}</p>
+                  <p><strong>Application ID:</strong> ${applicationID}</p>
+                  ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
+                  <div class="button-container">
+                      <a href="https://supplies.nrep.ug/sign-in" class="button">View Your Update</a>
+                  </div>
+                  <p>If you have any questions or need further assistance, feel free to contact our support team.</p>
+                  ${disclaimer}
+              </div>
+              <div class="footer">
+                  <p>Best regards,<br>Procurement Department,<br>National Renewable Energy Platform (NREP)</p>
+                  <p>&copy; ${new Date().getFullYear()} National Renewable Energy Platform (NREP). All rights reserved.</p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `;
+  
+    const textDisclaimer = `
+This email and any attachments are intended solely for the use of the individual or entity to whom they are addressed and may contain confidential and privileged information. If you are not the intended recipient, please notify the sender immediately and delete this email from your system. Any unauthorized use, disclosure, or distribution is prohibited.
     `;
   
     const text = `
-      Dear ${supplierName},
-  
-      ${message}
-  
-      Application ID: ${applicationID}
-  
-      ${comments ? `Comments: ${comments}` : ''}
-  
-      Best regards,
-      Procurent Department,
-      National Renewable Energy Platform (NREP)
+Dear ${supplierName},
+
+${message}
+
+Application ID: ${applicationID}
+
+${comments ? `Comments: ${comments}` : ''}
+
+You can view your update by logging into your account here: https://supplies.nrep.ug/sign-in
+
+If you have any questions or need further assistance, feel free to contact our support team.
+
+Best regards,
+Procurement Department,
+National Renewable Energy Platform (NREP)
+
+© ${new Date().getFullYear()} National Renewable Energy Platform (NREP). All rights reserved.
+
+${textDisclaimer}
     `;
   
     return { html, text };
-  };
+};
 
 // Function to save the password reset request to the JSON file
 export const savePasswordResetRequest = async (userEmail, resetCode) => {
