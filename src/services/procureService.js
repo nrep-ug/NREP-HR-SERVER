@@ -759,6 +759,7 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
         application.supplierID
       );
       const supplierEmail = supplier.email;
+      const contactPersonEmail = supplier.contactPersonEmail
       const supplierName = supplier.contactPerson || supplier.name;
   
       // Generate email content
@@ -778,7 +779,7 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
         text,
         replyTo: 'nrep.memd@gmail.com',
         department: 'Procurement',
-        cc: ['nrep.memd@gmail.com']
+        cc: ['nrep.memd@gmail.com',contactPersonEmail]
       });
   
       return updatedApplication;
