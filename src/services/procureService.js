@@ -790,7 +790,7 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
             text,
             replyTo: 'nrep.memd@gmail.com',
             department: 'Procurement',
-            cc: ['nrep.memd@gmail.com', contactPersonEmail]
+            cc: ['nrep.memd@gmail.com', 'mukisanic@gmail.com', contactPersonEmail]
         });
 
         return updatedApplication;
