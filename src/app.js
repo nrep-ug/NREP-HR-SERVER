@@ -5,6 +5,7 @@ import staffRoutes from './routes/staffRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import procureRoutes from './routes/procureRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
+import contactRoutes from './routes/contactRoutes.js';
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/procure', procureRoutes)
+app.use('/api', contactRoutes);
 
 app.use(errorHandler);
 
