@@ -16,7 +16,7 @@ const allowedOrigins = [
     'http://nrep.ug',             // nrep.ug without ssl
     'https://nrep.ug',            // nrep.ug with ssl
     'https://lkkz9p-3005.csb.app', // COODE-SANDBOX
-    'https://v0-nrep-hr-system.vercel.app/', // VERCEL
+    'https://v0-nrep-hr-system.vercel.app', // VERCEL
 ];
 
 const allowedBaseDomain = '.nrep.ug'; // Allow all subdomains under nrep.ug
