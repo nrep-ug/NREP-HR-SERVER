@@ -3,6 +3,7 @@ import fs from 'fs/promises'; // Use fs/promises for promise-based file system o
 import path from 'path';
 import moment from 'moment-timezone';
 import nodemailer from 'nodemailer';
+import postmark from 'postmark';
 import pool from '../config/mysqlConfig.js';
 import { InputFile } from 'node-appwrite/file'
 import {
@@ -11,6 +12,9 @@ import {
     procurePostBucketId,
 } from '../config/appwrite.js';
 import fsSync from 'fs'; // Import the regular fs module for synchronous operations
+
+// Initialize Postmark client
+const client = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
 
 // DATE/TIME
 export const currentDateTime = moment().tz('Africa/Nairobi');
@@ -36,7 +40,7 @@ export const uploadFile = async (file, fileInfo, bucketId) => {
 
     let data;
 
-    // Check if the file exists and read its content, or initialize the counter
+    // Check if the counter json file exists and read its content, or initialize the counter
     try {
         data = await fs.readFile(counterFilePath, 'utf-8');
     } catch (error) {
@@ -270,58 +274,160 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 };
 
 // Email sending function with CC and BCC options
+// export const sendEmail = async ({
+//     to,
+//     subject,
+//     html,
+//     text,
+//     replyTo,
+//     department = null,
+//     cc = null,
+//     bcc = null,
+// }) => {
+//     try {
+//         // Create a transporter object using SMTP transport
+//         const transporter = nodemailer.createTransport({
+//             host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
+//             port: process.env.NREP_EMAIL_PORT, // e.g., 587
+//             secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
+//             auth: {
+//                 user: process.env.NREP_EMAIL_INFO, // Your email address
+//                 pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
+//             },
+//         });
+
+//         // Set up email data
+//         const mailOptions = {
+//             from: `"${department !== null ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
+//             to, // Recipient(s)
+//             subject, // Subject line
+//             text, // Plain text body
+//             html, // HTML body
+//             replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
+//         };
+
+//         // Conditionally add CC if provided
+//         if (cc) {
+//             mailOptions.cc = cc;
+//         }
+
+//         // Conditionally add BCC if provided
+//         if (bcc) {
+//             mailOptions.bcc = bcc;
+//         }
+
+//         // Send mail
+//         const info = await transporter.sendMail(mailOptions);
+
+//         console.log('Email sent: %s', info.messageId);
+//         return {
+//             success: true,
+//             messageId: info.messageId,
+//         };
+//     } catch (error) {
+//         console.error('Error sending email:', error);
+//         throw error;
+//     }
+// };
+
+// Email sending function
+// export const sendEmail = async ({ to, subject, html, text, replyTo }) => {
+//     try {
+//         const response = await client.sendEmail({
+//             From: process.env.POSTMARK_EMAIL_FROM,
+//             To: to,
+//             Subject: subject,
+//             HtmlBody: html,
+//             TextBody: text,
+//             ReplyTo: replyTo || process.env.POSTMARK_EMAIL_REPLY_TO,
+//         });
+
+//         console.log('Email sent successfully:', response);
+//         return {
+//             success: true,
+//             messageId: response.MessageID,
+//         };
+//     } catch (error) {
+//         console.error('Error sending email:', error);
+//         throw error;
+//     }
+// };
 export const sendEmail = async ({
     to,
     subject,
     html,
     text,
-    replyTo,
+    replyTo = null,
     department = null,
     cc = null,
     bcc = null,
-}) => {
+  }) => {
     try {
-        // Create a transporter object using SMTP transport
-        const transporter = nodemailer.createTransport({
-            host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
-            port: process.env.NREP_EMAIL_PORT, // e.g., 587
-            secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
-            auth: {
-                user: process.env.NREP_EMAIL_INFO, // Your email address
-                pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
-            },
-        });
-
-        // Set up email data
-        const mailOptions = {
-            from: `"${department !== null ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
-            to, // Recipient(s)
-            subject, // Subject line
-            text, // Plain text body
-            html, // HTML body
-            replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
-        };
-
-        // Conditionally add CC if provided
-        if (cc) {
-            mailOptions.cc = cc;
+      console.log('Type of cc:', typeof cc);
+      console.log('Value of cc:', cc);
+  
+      // Ensure the 'From' email is verified with Postmark
+      const verifiedFromEmail = process.env.POSTMARK_EMAIL_FROM; // Must be a verified email address
+      const fromDisplayName = `${department ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)`;
+      const from = `${fromDisplayName} <${verifiedFromEmail}>`;
+  
+      // Prepare email data for Postmark
+      const emailData = {
+        From: from,
+        To: to,
+        Subject: subject,
+        HtmlBody: html,
+        TextBody: text,
+        ReplyTo: replyTo || process.env.POSTMARK_EMAIL_REPLY_TO,
+      };
+  
+      // Conditionally add CC field if it is provided and not empty
+      if (cc) {
+        if (Array.isArray(cc)) {
+          if (cc.length > 0) {
+            emailData.Cc = cc.join(', ');
+          }
+        } else if (typeof cc === 'string' && cc.trim()) {
+          emailData.Cc = cc.trim();
+        } else {
+          console.warn('Invalid cc value:', cc);
         }
-
-        // Conditionally add BCC if provided
-        if (bcc) {
-            mailOptions.bcc = bcc;
+      }
+  
+      // Conditionally add BCC field if it is provided and not empty
+      if (bcc) {
+        if (Array.isArray(bcc)) {
+          if (bcc.length > 0) {
+            emailData.Bcc = bcc.join(', ');
+          }
+        } else if (typeof bcc === 'string' && bcc.trim()) {
+          emailData.Bcc = bcc.trim();
+        } else {
+          console.warn('Invalid bcc value:', bcc);
         }
-
-        // Send mail
-        const info = await transporter.sendMail(mailOptions);
-
-        console.log('Email sent: %s', info.messageId);
-        return {
-            success: true,
-            messageId: info.messageId,
-        };
+      }
+  
+      // Send the email using the Postmark client
+      const response = await client.sendEmail(emailData);
+  
+      console.log('Email sent successfully:', response);
+      return {
+        success: true,
+        messageId: response.MessageID,
+      };
     } catch (error) {
-        console.error('Error sending email:', error);
+      console.error('Error sending email:', error);
+  
+      // Postmark-specific error handling
+      if (error.code === 400) {
+        // Handle bad requests, such as invalid email addresses or unverified 'From' address
+        throw new Error(`Postmark Error: ${error.message}`);
+      } else {
+        // Re-throw other errors
         throw error;
+      }
     }
-};
+  };  
+
+
+

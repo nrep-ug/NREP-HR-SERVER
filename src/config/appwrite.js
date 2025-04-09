@@ -13,9 +13,10 @@ client
 const databases = new Databases(client);
 const storage = new Storage(client);
 
-// HR-DATABASE
+/* HR-DATABASE */
 const hrDatabaseId = process.env.HR_DB_ID;
 const staffTableId = process.env.STAFF_TABLE_ID;
+const otpRequestTableId = process.env.OTP_REQUEST_TABLE_ID;
 
 // PROJECT DATABASE
 const projectDatabaseId = process.env.PROJECT_DB_ID;
@@ -39,6 +40,7 @@ export {
     databases,
     hrDatabaseId,
     staffTableId,
+    otpRequestTableId,
     projectDatabaseId,
     projectTableId,
     projectTeamTableId,

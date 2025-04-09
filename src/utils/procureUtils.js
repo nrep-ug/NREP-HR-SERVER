@@ -167,19 +167,37 @@ export const generateEmailContent = (userEmail, resetCode) => {
 };
 
 // Function to generate email content for status updates with disclaimer
-export const generateStatusUpdateEmailContent = (procureRefNo, procureTitle, supplierName, applicationID, status, comments) => {
-    const statusMessages = {
-      pending: 'Your application is currently pending review.',
-      under_review: 'Your application is under review.',
-      approved: 'Congratulations! Your application has been approved.',
-      rejected: 'We regret to inform you that your application has been rejected.',
-      on_hold: 'Your application is currently on hold.',
-      needs_more_info: 'We need more information to proceed with your application.',
-    };
+export const generateStatusUpdateEmailContent = (
+    procureRefNo,
+    procureTitle,
+    supplierName,
+    applicationID,
+    status,
+    comments
+  ) => {
+    const currentYear = new Date().getFullYear();
   
-    const message = statusMessages[status] || 'Your application status has been updated.';
+    const rejectionMessage = `
+      <p>
+      We appreciate your effort in submitting a proposal for the <strong>${procureTitle}</strong> under the National Renewable Energy Platform (NREP).
+      </p>
+   <!-- <p>
+       After careful evaluation, we regret to inform you that your application was not selected for further consideration. We encourage you to stay connected with us for future opportunities.
+      </p>    -->
+      <p>
+      After careful consideration and thorough evaluation of all submissions, we regret to inform you that application was not selected for further consideration to proceed to the next phase. 
+      This decision was based on a competitive process assessing various aspects including technical and financial criteria, as well as alignment with the project’s objectives.
+      </p>
+      <p>
+      We highly value the expertise and commitment demonstrated in your submission, and we encourage you to continue engaging with us. 
+      Please keep an eye on our <a href="https://supplies.nrep.ug">website</a> and <a href="https://supplies.nrep.ug/procurement">procurement portal</a> for updates on future opportunities that may align with your capabilities and interests.
+      </p>
+      <p>
+      We deeply appreciate your interest in partnering with NREP to advance renewable energy initiatives in Uganda, and we hope to collaborate with you in the near future.
+      </p>
+    
+      `;
   
-    // Define the disclaimer text
     const disclaimer = `
       <p style="font-size:12px; color:#777777; margin-top:20px; border-top:1px solid #e0e0e0; padding-top:10px;">
         This email and any attachments are intended solely for the use of the individual or entity to whom they are addressed and may contain confidential and privileged information. If you are not the intended recipient, please notify the sender immediately and delete this email from your system. Any unauthorized use, disclosure, or distribution is prohibited.
@@ -188,131 +206,106 @@ export const generateStatusUpdateEmailContent = (procureRefNo, procureTitle, sup
   
     const html = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
       <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Application Status Update</title>
-          <style>
-              body {
-                  font-family: Arial, sans-serif;
-                  background-color: #f4f4f4;
-                  margin: 0;
-                  padding: 0;
-              }
-              .container {
-                  width: 100%;
-                  max-width: 600px;
-                  margin: 0 auto;
-                  background-color: #ffffff;
-                  padding: 20px;
-                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-              }
-              .header {
-                  text-align: center;
-                  padding-bottom: 20px;
-                  border-bottom: 1px solid #e0e0e0;
-                  background-color: #ffffff;
-              }
-              .header img {
-                  max-width: 150px;
-              }
-              .content {
-                  padding: 20px 0;
-              }
-              .content p {
-                  line-height: 1.6;
-                  color: #333333;
-              }
-              .button-container {
-                  text-align: center;
-                  margin: 30px 0;
-              }
-              .button {
-                  background-color: #007BFF;
-                  color: #ffffff;
-                  padding: 12px 25px;
-                  text-decoration: none;
-                  border-radius: 5px;
-                  font-size: 16px;
-              }
-              .button:hover {
-                  background-color: #0056b3;
-              }
-              .footer {
-                  text-align: center;
-                  font-size: 12px;
-                  color: #777777;
-                  border-top: 1px solid #e0e0e0;
-                  padding-top: 20px;
-                  margin-top: 20px;
-              }
-              @media only screen and (max-width: 600px) {
-                  .container {
-                      padding: 15px;
-                  }
-                  .button {
-                      width: 100%;
-                      box-sizing: border-box;
-                  }
-              }
-          </style>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Status Update</title>
+        <style>
+          /* CLIENT-SPECIFIC STYLES */
+          #outlook a { padding:0; }
+          body { width:100% !important; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; margin:0; padding:0; }
+          table, td { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+          img { border:0; height:auto; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+          p { display:block; margin:13px 0; }
+  
+          /* RESPONSIVE STYLES */
+          @media only screen and (max-width:600px) {
+            .container { width:100% !important; }
+            .header, .content, .footer { padding:15px !important; }
+            .button { width:100% !important; }
+          }
+  
+          /* RESET STYLES */
+          body, #bodyTable { background-color:#f4f4f4; }
+          .container { width:600px; margin:0 auto; background-color:#ffffff; }
+          .header { text-align:center; padding:20px; }
+          .content { padding:20px; font-family: Arial, sans-serif; color:#333333; }
+          .footer { text-align:center; padding:20px; font-size:12px; color:#777777; }
+          .button { background-color:#yellow; color:#ffffff; padding:15px 25px; text-decoration:none; border-radius:5px; display:inline-block; }
+          .button:hover { background-color:#218838; }
+        </style>
       </head>
       <body>
-          <div class="container">
-              <div class="header">
-                  <img src="https://supplies.nrep.ug/images/NREP-WHITE.jpg" alt="Company Logo">
-              </div>
-              <div class="content">
-                  <p>Dear ${supplierName},</p>
-                  <p>${message}</p>
-                  <p><strong>Procurement:</strong> ${procureTitle}</p>
-                  <p><strong>Procurement Reference Number:</strong> ${procureRefNo}</p>
-                  <p><strong>Application ID:</strong> ${applicationID}</p>
-                  ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
-                  <div class="button-container">
-                      <a href="https://supplies.nrep.ug/sign-in" class="button">View Your Update</a>
-                  </div>
-                  <p>If you have any questions or need further assistance, feel free to contact our support team.</p>
-                  ${disclaimer}
-              </div>
-              <div class="footer">
-                  <p>Best regards,<br>Procurement Department,<br>National Renewable Energy Platform (NREP)</p>
-                  <p>&copy; ${new Date().getFullYear()} National Renewable Energy Platform (NREP). All rights reserved.</p>
-              </div>
-          </div>
+        <table id="bodyTable" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="center">
+              <table class="container" cellpadding="0" cellspacing="0">
+                <!-- Header -->
+                <tr>
+                  <td class="header">
+                    <img src="https://supplies.nrep.ug/images/NREP-WHITE.jpg" alt="NREP Logo" width="150" style="display:block; margin:0 auto;">
+                  </td>
+                </tr>
+                <!-- Content -->
+                <tr>
+                  <td class="content">
+                    <p>Dear ${supplierName},</p>
+                    ${status === 'rejected' ? rejectionMessage : `<p>${comments}</p>`}
+                    <p><strong>Procurement Title:</strong> ${procureTitle}</p>
+                    <p><strong>Reference Number:</strong> ${procureRefNo}</p>
+                    <p><strong>Application ID:</strong> ${applicationID}</p>
+                    ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
+                    <p style="text-align:center;">
+                      <a href="https://supplies.nrep.ug/sign-in" class="button">View Your Application Status</a>
+                    </p>
+                    <p>If you have any questions, please contact our support team.</p>
+                    ${disclaimer}
+                  </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                  <td class="footer">
+                    <p>Best regards,<br>Procurement Department,<br>National Renewable Energy Platform (NREP)</p>
+                    <p>&copy; ${currentYear} National Renewable Energy Platform (NREP). All rights reserved.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
   
     const textDisclaimer = `
-This email and any attachments are intended solely for the use of the individual or entity to whom they are addressed and may contain confidential and privileged information. If you are not the intended recipient, please notify the sender immediately and delete this email from your system. Any unauthorized use, disclosure, or distribution is prohibited.
+  This email and any attachments are intended solely for the use of the individual or entity to whom they are addressed and may contain confidential and privileged information. If you are not the intended recipient, please notify the sender immediately and delete this email from your system. Any unauthorized use, disclosure, or distribution is prohibited.
     `;
   
     const text = `
-Dear ${supplierName},
-
-${message}
-
-Application ID: ${applicationID}
-
-${comments ? `Comments: ${comments}` : ''}
-
-You can view your update by logging into your account here: https://supplies.nrep.ug/sign-in
-
-If you have any questions or need further assistance, feel free to contact our support team.
-
-Best regards,
-Procurement Department,
-National Renewable Energy Platform (NREP)
-
-© ${new Date().getFullYear()} National Renewable Energy Platform (NREP). All rights reserved.
-
-${textDisclaimer}
+  Dear ${supplierName},
+  
+  We regret to inform you that your application has been rejected.
+  
+  Procurement Title: ${procureTitle}
+  Reference Number: ${procureRefNo}
+  Application ID: ${applicationID}
+  
+  ${comments ? `Comments: ${comments}` : ''}
+  
+  Please visit our portal to view your application status: https://supplies.nrep.ug/sign-in
+  
+  Best regards,
+  Procurement Department,
+  National Renewable Energy Platform (NREP)
+  
+  © ${currentYear} National Renewable Energy Platform (NREP). All rights reserved.
+  
+  ${textDisclaimer}
     `;
   
     return { html, text };
-};
+  };
 
 // Function to save the password reset request to the JSON file
 export const savePasswordResetRequest = async (userEmail, resetCode) => {

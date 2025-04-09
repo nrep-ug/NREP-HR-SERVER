@@ -6,6 +6,7 @@ import projectRoutes from './routes/projectRoutes.js';
 import procureRoutes from './routes/procureRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 import contactRoutes from './routes/contactRoutes.js';
+import testEmailRoute from './routes/testEmailRoute.js';
 
 const app = express();
 
@@ -35,6 +36,11 @@ const corsOptions = {
 app.use(cors(corsOptions));  // Enable CORS with the specified options
 app.use(express.json());
 
+// TESTING ROUTES
+// Test email route
+app.use('/api/test', testEmailRoute);
+
+// MAIN ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/projects', projectRoutes);
