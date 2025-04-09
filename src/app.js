@@ -24,6 +24,7 @@ const allowedBaseDomain = '.nrep.ug'; // Allow all subdomains under nrep.ug
 // Configure CORS
 const corsOptions = {
     origin: (origin, callback) => {
+        console.log('CORS Origin:', origin); // Log the origin for debugging
         if (allowedOrigins.includes(origin) ||
             (origin && origin.endsWith(allowedBaseDomain)) ||
             !origin) {
