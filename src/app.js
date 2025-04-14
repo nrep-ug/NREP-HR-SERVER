@@ -12,22 +12,26 @@ const app = express();
 
 // Define the allowed origins and base domain
 const allowedOrigins = [
-    'http://localhost:3000',          // Localhost
-    'http://nrep.ug',             // nrep.ug without ssl
-    'https://nrep.ug',            // nrep.ug with ssl
-    'https://lkkz9p-3005.csb.app', // COODE-SANDBOX
-    'https://v0-nrep-hr-system.vercel.app', // VERCEL
+    'http://localhost:3000', // Localhost for development
+    'http://nrep.ug', // Production domain
+    'https://nrep.ug', // Production domain with HTTPS
+    'https://lkkz9p-3005.csb.app', // CodeSandbox domain for testing
 ];
 
-const allowedBaseDomain = '.nrep.ug'; // Allow all subdomains under nrep.ug
+const allowedBaseDomains = [
+    '.vercel.app',
+    '.nrep.ug'
+]; // Allow all subdomains under vercel.app and nrep.ug
 
 // Configure CORS
 const corsOptions = {
     origin: (origin, callback) => {
-        console.log('CORS Origin:', origin); // Log the origin for debugging
-        if (allowedOrigins.includes(origin) ||
-            (origin && origin.endsWith(allowedBaseDomain)) ||
-            !origin) {
+        console.log('CORS Origin:', origin);
+        if (
+            !origin || 
+            allowedOrigins.includes(origin) || 
+            allowedBaseDomains.some(base => origin.endsWith(base))
+        ) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
