@@ -1,4 +1,4 @@
-import {databases, hrDatabaseId, otpRequestTableId, ID} from '../config/appwrite.js';
+import {databases, hrDb, ID} from '../config/appwrite.js';
 import { sendEmail, isNrepUgEmail, currentDateTime } from '../utils/utils.js';
 
 const users = [
@@ -27,7 +27,7 @@ export const requestOTP = async (data) => {
         try {
             const response = await databases.createDocument(
                 hrDatabaseId,
-                otpRequestTableId,
+                hrDb.otpRequestTableId,
                 otpId,
                 {
                     otpId: otpId,

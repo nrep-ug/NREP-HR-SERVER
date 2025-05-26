@@ -3,17 +3,9 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import moment from 'moment-timezone';
 import {
-    storage,
     databases,
     Query,
-    ID,
-    procureDatabaseId,
-    procurePostsTableId,
-    procureSupplierApplicationTableId,
-    procureSupplierTableId,
-    procureStaffTableId,
-    procureCategoryTableId,
-    procurePostBucketId,
+    procurementDb
 } from '../config/appwrite.js';
 import dotenv from 'dotenv';
 import fsSync from 'fs'; // Import the regular fs module for synchronous operations
@@ -106,8 +98,8 @@ export async function generateUniqueId(type) {
 // Helper function to check if supplier login email exists in the system
 export const checkEmailExists = async (userEmail) => {
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierTableId,
         [
             Query.equal('accountEmail', userEmail)
         ]

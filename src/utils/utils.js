@@ -8,8 +8,7 @@ import pool from '../config/mysqlConfig.js';
 import { InputFile } from 'node-appwrite/file'
 import {
     storage,
-    ID,
-    procurePostBucketId,
+    ID
 } from '../config/appwrite.js';
 import fsSync from 'fs'; // Import the regular fs module for synchronous operations
 

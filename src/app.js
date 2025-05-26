@@ -7,6 +7,7 @@ import procureRoutes from './routes/procureRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 import contactRoutes from './routes/contactRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
+import hrRoutes from './routes/hrRoutes.js';
 
 const app = express();
 
@@ -15,6 +16,8 @@ const allowedOrigins = [
     'http://localhost:3000', // Localhost for development
     'http://nrep.ug', // Production domain
     'https://nrep.ug', // Production domain with HTTPS
+    'http://hr.nrep.ug', // HR domain with HTTP
+    'https://hr.nrep.ug', // HR domain with HTTPS
     'https://lkkz9p-3005.csb.app', // CodeSandbox domain for testing
 ];
 
@@ -52,6 +55,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/procure', procureRoutes)
 app.use('/api', contactRoutes);
+app.use('/api/hr', hrRoutes);
 
 app.use(errorHandler);
 

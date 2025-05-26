@@ -1,10 +1,17 @@
-import { storage, databases, ID, Query, projectDatabaseId, projectTableId, projectTeamTableId, projectTaskTableId, projectTeamTaskTableId } from '../config/appwrite.js';
+import {
+    storage,
+    databases,
+    ID,
+    Query,
+    projectDb
+
+} from '../config/appwrite.js';
 import moment from 'moment-timezone';
 
 export const createProject = async (data) => {
     let projectData = { ...data }; // Create a shallow copy of the data object
 
-    console.log('Project DB id: ', projectDatabaseId + '\n Project table id: ', projectTableId);
+    console.log('Project DB id: ', projectDb.databaseId + '\n Project table id: ', projectDb.projectTableId);
     console.log('Project data: ', data);
 
     const projectID = ID.unique();
@@ -13,8 +20,8 @@ export const createProject = async (data) => {
     // Create new project in database table
     delete projectData.leadName; // Remove leadName since it's not required in the database table. Only pass what's required
     const response = await databases.createDocument(
-        projectDatabaseId,
-        projectTableId,
+        projectDb.databaseId,
+        projectDb.projectTableId,
         projectID,
         {
             ...projectData, // Use the modified projectData
@@ -45,8 +52,8 @@ export const createProject = async (data) => {
 export const getProject = async (projectId) => {
     console.log('Project ID: ', projectId);
     const response = await databases.getDocument(
-        projectDatabaseId,
-        projectTableId,
+        projectDb.databaseId,
+        projectDb.projectTableId,
         projectId
     );
     return response;
@@ -55,8 +62,8 @@ export const getProject = async (projectId) => {
 export const getAllProjects = async (query = []) => {
     console.log('getting all projects...');
     const response = await databases.listDocuments(
-        projectDatabaseId,
-        projectTableId,
+        projectDb.databaseId,
+        projectDb.projectTableId,
         query
     );
     // console.log('all projects: ', response);
@@ -68,8 +75,10 @@ export const addProjectMembers = async (data) => {
     for (const member of data.members) {
         console.log('adding member: ', member + ' ProjectID: ', data.projectID);
         const response = await databases.createDocument(
-            projectDatabaseId,
-            projectTeamTableId,
+            projectDb.databaseId
+            ,
+            projectDb.projectTeamTableId
+            ,
             'unique()',
             {
                 projectID: data.projectID,
@@ -87,8 +96,8 @@ export const addProjectMembers = async (data) => {
 
 export const getProjectTeam = async (projectID) => {
     const response = await databases.listDocuments(
-        projectDatabaseId,
-        projectTeamTableId,
+        projectDb.databaseId,
+        projectDb.projectTeamTableId,
         [
             Query.limit(1000),
             Query.equal('projectID', projectID)
@@ -112,8 +121,8 @@ export const addProjectTask = async (data) => {
     for (const task of data) {
         console.log('adding task: ', task);
         response = await databases.createDocument(
-            projectDatabaseId,
-            projectTaskTableId,
+            projectDb.databaseId,
+            projectDb.projectTaskTableId,
             taskID,
             {
                 projectID: task.projectID,
@@ -145,8 +154,8 @@ export const addProjectTask = async (data) => {
 export const getAllProjectTasks = async (projectID) => {
     console.log('Getting all project tasks for ', projectID)
     const response = await databases.listDocuments(
-        projectDatabaseId,
-        projectTaskTableId,
+        projectDb.databaseId,
+        projectDb.projectTaskTableId,
         [
             Query.limit(1000),
             Query.equal('projectID', projectID)
@@ -159,8 +168,8 @@ export const getAllProjectTasks = async (projectID) => {
 export const getProjectTask = async (projectID, taskID) => {
     console.log('Getting Task ', taskID + ' for Project ', projectID)
     const response = await databases.listDocuments(
-        projectDatabaseId,
-        projectTaskTableId,
+        projectDb.databaseId,
+        projectDb.projectTaskTableId,
         [
             Query.limit(1000),
             Query.equal('taskID', taskID),
@@ -176,8 +185,8 @@ export const addProjectTaskMembers = async (projectID, taskID, data) => {
     for (const member of data.members) {
         console.log('adding member: ', member + ' ProjectID: ', projectID + ' taskID: ', taskID);
         const response = await databases.createDocument(
-            projectDatabaseId,
-            projectTeamTaskTableId,
+            projectDb.databaseId,
+            projectDb.projectTeamTaskTableId,
             'unique()',
             {
                 projectID: projectID,
@@ -196,8 +205,8 @@ export const addProjectTaskMembers = async (projectID, taskID, data) => {
 
 export const getProjectTaskTeam = async (projectID, taskID) => {
     const response = await databases.listDocuments(
-        projectDatabaseId,
-        projectTeamTaskTableId,
+        projectDb.databaseId,
+        projectDb.projectTeamTaskTableId,
         [
             Query.limit(10000),
             Query.equal('projectID', projectID),

@@ -8,21 +8,11 @@
 import fs from 'fs';
 import path from 'path';
 import {
-    storage,
     databases,
     Query,
-    ID,
-    procureDatabaseId,
-    procurePostsTableId,
-    procureSupplierApplicationTableId,
-    procureSupplierTableId,
-    procureStaffTableId,
-    procureCategoryTableId,
-    hrDatabaseId,
-    staffTableId,
-    procurePostBucketId,
+    procurementDb,
+    hrDb
 } from '../config/appwrite.js';
-import { getStaff } from '../services/staffService.js'
 import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile, generateAplaNumericCode, verifyCode, isCodeStillValid } from "../utils/utils.js";
 import { sendEmail } from '../utils/utils.js';
 import * as utils from "../utils/procureUtils.js"
@@ -46,8 +36,8 @@ export const signUpStaff = async (data) => {
 
     // Register to Procurement Database staff table
     const response = await databases.createDocument(
-        procureDatabaseId,
-        procureStaffTableId,
+        procurementDb.databaseId,
+        procurementDb.staffTableId,
         staffData.staffID,
         {
             ...staffData,
@@ -77,8 +67,8 @@ export const signInStaff = async (data) => {
 
         // Query HR Staff table for staff credentials
         const hrResponse = await databases.listDocuments(
-            hrDatabaseId,
-            staffTableId,
+            hrDb.databaseId,
+            hrDb.staffTableId,
             [Query.equal(emailField, data.email)]
         );
 
@@ -96,8 +86,8 @@ export const signInStaff = async (data) => {
 
         // Check Procurement Database if Staff Exists
         const procurementResponse = await databases.listDocuments(
-            procureDatabaseId,
-            procureStaffTableId,
+            procurementDb.databaseId,
+            procurementDb.staffTableId,
             [Query.equal('staffID', userCredentials.staffID)]
         );
 
@@ -174,7 +164,7 @@ export const signUpSupplier = async (data) => {
                 fileName: file.originalname,
                 mimeType: file.mimetype,
             },
-            procurePostBucketId
+            procurementDb.postBucketId
         );
     }
 
@@ -206,8 +196,8 @@ export const signUpSupplier = async (data) => {
     let response
     try {
         response = await databases.createDocument(
-            procureDatabaseId,
-            procureSupplierTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierTableId,
             supplierID,
             newSupplierEntry
         );
@@ -217,7 +207,7 @@ export const signUpSupplier = async (data) => {
         // Delete the uploaded file from the database if provided, otherwise
         console.log('Doc uploaded:', newSupplierEntry.document)
         if (newSupplierEntry.document.length > 0) {
-            await deleteAppwriteFile(procurePostBucketId, newSupplierEntry.document[0])
+            await deleteAppwriteFile(procurementDb.postBucketId, newSupplierEntry.document[0])
         }
 
         console.log(e);
@@ -239,8 +229,8 @@ export const signInSupplier = async (data) => {
         console.log(data);
         // Retrieve user by email
         const userData = await databases.listDocuments(
-            procureDatabaseId,
-            procureSupplierTableId, [
+            procurementDb.databaseId,
+            procurementDb.supplierTableId, [
             Query.equal('accountEmail', data.email)
         ]);
 
@@ -358,7 +348,7 @@ export const handlePasswordChange = async (code, email, password) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Modify the password field with the new password
-    const response = await databases.updateDocument(procureDatabaseId, procureSupplierTableId, supplierID, { password: hashedPassword })
+    const response = await databases.updateDocument(procurementDb.databaseId, procurementDb.supplierTableId, supplierID, { password: hashedPassword })
 
     return { success: true, message: 'Password has been changed successfully', status: 200, data: response };
 };
@@ -390,8 +380,8 @@ export const getAllSuppliers = async (validated = null, userType = []) => {
     }
 
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierTableId,
         query
     );
 
@@ -406,8 +396,8 @@ export const getAllSuppliersPage = async (data) => {
 
     // Fetch the supplier documents
     const documents = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierTableId,
         [
             Query.limit(limit),
             Query.offset(offset),
@@ -418,8 +408,8 @@ export const getAllSuppliersPage = async (data) => {
     const suppliersWithApplications = await Promise.all(documents.documents.map(async (supplier) => {
         // Query the supplier application table to get the number of applications for this supplier
         const applicationResponse = await databases.listDocuments(
-            procureDatabaseId,
-            procureSupplierApplicationTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierApplicationTableId,
             [
                 Query.equal('supplierID', supplier.supplierID),
                 Query.limit(50)
@@ -447,8 +437,8 @@ export const getAllSuppliersPage = async (data) => {
 // Return information about a specific supplier
 export const getSupplier = async (id) => {
     const response = await databases.getDocument(
-        procureDatabaseId,
-        procureSupplierTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierTableId,
         id
     )
 
@@ -481,8 +471,8 @@ export const createProcurementPost = async (formData, file) => {
 
     // Create the document in the Appwrite database
     const response = await databases.createDocument(
-        procureDatabaseId,
-        procurePostsTableId,
+        procurementDb.databaseId,
+        procurementDb.postBucketId,
         postID,
         {
             title: formData.title,
@@ -525,8 +515,8 @@ export const getAllServices = async (all = false, expired = false, status = null
     }
 
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procurePostsTableId,
+        procurementDb.databaseId,
+        procurementDb.postBucketId,
         query
     );
 
@@ -560,8 +550,8 @@ export const getAllServicesPage = async (data) => {
     }
 
     const documents = await databases.listDocuments(
-        procureDatabaseId,
-        procurePostsTableId,
+        procurementDb.databaseId,
+        procurementDb.postBucketId,
         queries
     );
 
@@ -576,8 +566,8 @@ export const getAllServicesPage = async (data) => {
 // Return information about a specific posted service/product
 export const getService = async (id) => {
     const response = await databases.getDocument(
-        procureDatabaseId,
-        procurePostsTableId,
+        procurementDb.databaseId,
+        procurementDb.postBucketId,
         id
     )
 
@@ -594,8 +584,8 @@ export const handleProcurementApplication = async (files, data) => {
         // Check if the supplier has already applied for this procurement application
         console.log(`Checking if supplier (${data.supplierID}) already applied for ${data.procurementID}`);
         const ifApplied = await databases.listDocuments(
-            procureDatabaseId,
-            procureSupplierApplicationTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierApplicationTableId,
             [
                 Query.equal('supplierID', data.supplierID),
                 Query.equal('postID', data.procurementID),
@@ -619,7 +609,7 @@ export const handleProcurementApplication = async (files, data) => {
                     fileName: file.originalname,
                     mimeType: file.mimetype,
                 },
-                procurePostBucketId
+                procurementDb.postBucketId
             );
         };
 
@@ -660,8 +650,8 @@ export const handleProcurementApplication = async (files, data) => {
 
         console.log('proceeding to finish application')
         const response = await databases.createDocument(
-            procureDatabaseId,
-            procureSupplierApplicationTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierApplicationTableId,
             applicationID,
             {
                 applicationID,
@@ -693,8 +683,8 @@ export const handleProcurementApplication = async (files, data) => {
 export const getAppliedToServices = async (supplierID) => {
     console.log('getting applied to services/products', supplierID);
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierApplicationTableId,
         [
             Query.equal('supplierID', supplierID)
         ]
@@ -708,8 +698,8 @@ export const getAppliedToServices = async (supplierID) => {
 // Get Data to specific applied to services/products by Supplier
 export const getAppliedToServiceData = async (data) => {
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procureSupplierApplicationTableId,
+        procurementDb.databaseId,
+        procurementDb.supplierApplicationTableId,
         [
             Query.equal('supplierID', data.supplierID),
             Query.equal('applicationID', data.applicationID)
@@ -724,8 +714,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
     try {
         // Fetch the existing application
         const application = await databases.getDocument(
-            procureDatabaseId,
-            procureSupplierApplicationTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierApplicationTableId,
             applicationID
         );
 
@@ -738,8 +728,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
 
         // Update the application with the new status and comments
         const updatedApplication = await databases.updateDocument(
-            procureDatabaseId,
-            procureSupplierApplicationTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierApplicationTableId,
             applicationID,
             {
                 status,
@@ -753,8 +743,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
         // Fetch the procurement details
 
         const procureDetails = await databases.getDocument(
-            procureDatabaseId,
-            procurePostsTableId,
+            procurementDb.databaseId,
+            procurementDb.postBucketId,
             procureRefNo
         )
 
@@ -764,8 +754,8 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
         // Retrieve supplier's email using application.supplierID
         console.log('Supplier ID: ', application.supplierID)
         const supplier = await databases.getDocument(
-            procureDatabaseId,
-            procureSupplierTableId,
+            procurementDb.databaseId,
+            procurementDb.supplierTableId,
             application.supplierID
         );
         const supplierEmail = supplier.email;
@@ -815,8 +805,8 @@ export const addCategory = async (data) => {
     const catID = await utils.generateUniqueId('CAT')
 
     const response = await databases.createDocument(
-        procureDatabaseId,
-        procureCategoryTableId,
+        procurementDb.databaseId,
+        procurementDb.categoryTableId,
         catID,
         {
             catID,
@@ -830,8 +820,8 @@ export const addCategory = async (data) => {
 // Return categories
 export const getCategories = async () => {
     const response = await databases.listDocuments(
-        procureDatabaseId,
-        procureCategoryTableId
+        procurementDb.databaseId,
+        procurementDb.categoryTableId
     )
 
     return response
@@ -840,6 +830,6 @@ export const getCategories = async () => {
 //File View
 export const getFileView = async (fileId) => {
     console.log('Getting file to view', fileId)
-    const response = await appwriteFileView(fileId, procurePostBucketId)
+    const response = await appwriteFileView(fileId, procurementDb.postBucketId)
     return response
 }
