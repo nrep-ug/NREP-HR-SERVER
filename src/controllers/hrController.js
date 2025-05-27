@@ -12,9 +12,9 @@ export const deleteUserAccount = async (req, res, next) => {
         const response = await hrService.deleteUserAccountSerice(userId);
 
         if (response.success) {
-            return res.status(200).json({ message: response.message });
+            return res.status(200).json(response);
         } else {
-            return res.status(500).json({ message: response.message || 'Failed to delete user account.' });
+            return res.status(500).json(response || {  success: false, message: 'Failed to delete user account.' });
         }
     } catch (error) {
         next(error);

@@ -4,6 +4,7 @@ import { deleteUserAccount } from "../../utils/hr/utils.js";
 export const deleteUserAccountSerice = async (userId) => {
     console.log('Deleting user account: ', userId);
     const response = await deleteUserAccount(userId);
+    
     if (response.success) {
         return { success: true, message: 'User account deleted successfully.' };
     } else {
