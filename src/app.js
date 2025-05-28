@@ -1,62 +1,40 @@
+// Third-party imports
 import express from 'express';
 import cors from 'cors';
-import authRoutes from './routes/authRoutes.js'
+
+// Middleware
+import errorHandler from './middlewares/errorHandler.js';
+
+// Route imports
+import authRoutes from './routes/authRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import procureRoutes from './routes/procureRoutes.js';
-import errorHandler from './middlewares/errorHandler.js';
 import contactRoutes from './routes/contactRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
 import hrRoutes from './routes/hrRoutes.js';
 
+// Configurations
+import corsOptions from './config/corsOptions.js'; // <-- Move CORS config here
+
 const app = express();
 
-// Define the allowed origins and base domain
-const allowedOrigins = [
-    'http://localhost:3000', // Localhost for development
-    'http://nrep.ug', // Production domain
-    'https://nrep.ug', // Production domain with HTTPS
-    'http://hr.nrep.ug', // HR domain with HTTP
-    'https://hr.nrep.ug', // HR domain with HTTPS
-    'https://lkkz9p-3005.csb.app', // CodeSandbox domain for testing
-];
-
-const allowedBaseDomains = [
-    '.vercel.app',
-    '.nrep.ug'
-]; // Allow all subdomains under vercel.app and nrep.ug
-
-// Configure CORS
-const corsOptions = {
-    origin: (origin, callback) => {
-        console.log('CORS Origin:', origin);
-        if (
-            !origin || 
-            allowedOrigins.includes(origin) || 
-            allowedBaseDomains.some(base => origin.endsWith(base))
-        ) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    }
-};
-
-app.use(cors(corsOptions));  // Enable CORS with the specified options
+// === Middleware ===
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// TESTING ROUTES
-// Test email route
+// === Test Routes ===
 app.use('/api/test', testEmailRoute);
 
-// MAIN ROUTES
+// === Main API Routes ===
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/procure', procureRoutes)
+app.use('/api/procure', procureRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/hr', hrRoutes);
 
+// === Error Handler ===
 app.use(errorHandler);
 
 export default app;
