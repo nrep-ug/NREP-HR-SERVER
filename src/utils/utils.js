@@ -1,115 +1,97 @@
 // src/utils/utils.js
-import fs from 'fs/promises'; // Use fs/promises for promise-based file system operations
+//---------------------------------
+// Imports
+//---------------------------------
+import fs from 'fs/promises';        // Promise-based file system
+import fsSync from 'fs';               // Synchronous file system
 import path from 'path';
 import moment from 'moment-timezone';
+
 import nodemailer from 'nodemailer';
 import postmark from 'postmark';
+
 import pool from '../config/mysqlConfig.js';
-import { InputFile } from 'node-appwrite/file'
-import {
-    storage,
-    ID
-} from '../config/appwrite.js';
-import fsSync from 'fs'; // Import the regular fs module for synchronous operations
+import { InputFile } from 'node-appwrite/file';
+import { storage, ID } from '../config/appwrite.js';
 
 // Initialize Postmark client
 const client = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
 
-// DATE/TIME
+//---------------------------------
+// Date/Time Utilities
+//---------------------------------
 export const currentDateTime = moment().tz('Africa/Nairobi');
 
-// DATE/TIME as `dd-mm-yyyy-hhmmss`
 export const formatDate = () => {
-    // Get the current date and time with moment-timezone
-    const now = moment().tz('Africa/Nairobi'); // You can set your desired timezone instead of 'UTC'
-
-    // Format the date in 'dd-mm-yyyy-hhmmss'
-    return now.format('DD-MM-YYYY-HHmmss');
+    // Format the date as 'DD-MM-YYYY-HHmmss'
+    return moment().tz('Africa/Nairobi').format('DD-MM-YYYY-HHmmss');
 };
 
-// Upload file to appwrite bucket
-export const uploadFile = async (file, fileInfo, bucketId) => {
+//---------------------------------
+// File Upload & Management
+//---------------------------------
 
-    /* GENERATING FILE-ID */
-    const counterFilePath = path.resolve('./src/data/docID.json'); // Path to the counter file
-    const counterDir = path.dirname(counterFilePath); // Directory path
+// Upload file to Appwrite bucket
+export const uploadFile = async (file, fileInfo, bucketId) => {
+    const counterFilePath = path.resolve('./src/data/docID.json');
+    const counterDir = path.dirname(counterFilePath);
 
     // Ensure the directory exists
     await fs.mkdir(counterDir, { recursive: true });
-
     let data;
 
-    // Check if the counter json file exists and read its content, or initialize the counter
+    // Read or initialize the counter file
     try {
         data = await fs.readFile(counterFilePath, 'utf-8');
     } catch (error) {
-        if (error.code === 'ENOENT') { // If the file does not exist
-            data = JSON.stringify({
-                documentID: 0
-            });
+        if (error.code === 'ENOENT') {
+            data = JSON.stringify({ documentID: 0 });
             await fs.writeFile(counterFilePath, data);
         } else {
-            throw error; // Rethrow if another error occurred
+            throw error;
         }
     }
-
+    
     const counterData = JSON.parse(data);
-
-    // Determine the key based on the type
-    let counterKey = 'documentID';
-
-    // Initialize the counter if the key doesn't exist
+    const counterKey = 'documentID';
     if (!counterData.hasOwnProperty(counterKey)) {
         counterData[counterKey] = 0;
     }
-
-    // Increment the relevant counter
     counterData[counterKey] += 1;
-
-    // Save the updated counter back to the file
     await fs.writeFile(counterFilePath, JSON.stringify(counterData, null, 2));
 
-    const currentDateTime = formatDate();
+    const currentDate = formatDate();
     const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
+    const uniqueId = `DOC-${currentDate}-${formattedCounter}`;
 
-    // Generate the unique ID in the format NREP-{TYPE}-YYYY-NNNN
-    const uniqueId = `DOC-${currentDateTime}-${formattedCounter}`;
-
-    /* SAVING DOCUMENT */
-    console.log('Uploading file ... ', uniqueId)
+    console.log('Uploading file ... ', uniqueId);
     const response = await storage.createFile(
         bucketId,
         uniqueId,
         InputFile.fromBuffer(file, fileInfo.fileName)
-    )
-    console.log('Finished uploading file: ', fileInfo.fileName)
+    );
+    console.log('Finished uploading file: ', fileInfo.fileName);
 
     return response;
 };
 
 // Upload a file to the MySQL database
 export const uploadFile2 = async (file, fileInfo) => {
-    // TODO: Add file-type as a field in the database table
     try {
         const connection = await pool.getConnection();
-
         const { fileName, description } = fileInfo;
-        const fileID = ID.unique(); // Use a unique identifier for the file
-
-        // Insert the file into the database
+        const fileID = ID.unique();
         const sql = `
             INSERT INTO Files (fileId, name, description, file)
             VALUES (?, ?, ?, ?)
         `;
         const values = [fileID, fileName, description, file.buffer];
-
         await connection.execute(sql, values);
         connection.release();
-
         return fileID;
     } catch (error) {
         console.error('Error uploading file to the database:', error);
-        throw error; // Re-throw the error to be handled by the caller
+        throw error;
     }
 };
 
@@ -171,6 +153,9 @@ export const getFileById = async (fileId) => {
     }
 };
 
+//---------------------------------
+// Code Verification & Helpers
+//---------------------------------
 export function isNrepUgEmail(email) {
     // Regular expression to match the domain nrep.ug and its subdomains
     const regex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*nrep\.ug$/;
@@ -179,7 +164,7 @@ export function isNrepUgEmail(email) {
     return regex.test(email);
 }
 
-// Function to generate a random 6-character code
+// Generate a random alphanumeric code of specified length
 export const generateAplaNumericCode = async (length) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -189,7 +174,7 @@ export const generateAplaNumericCode = async (length) => {
     return code;
 };
 
-// Helper function to verify the code from a specific file
+// Verify a code from a given file (marks it as used upon successful verification)
 export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, providedCode) => {
     const filePath = path.resolve(fileName);
 
@@ -235,7 +220,7 @@ export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, p
     return true;
 };
 
-// Helper function to verify code time validity and is set to used. [ONLY USED AT PASSWORD CHANGE]
+// Helper function to check if a code (already marked as used) is still within valid time for password change
 export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEmail, providedCode) => {
     const filePath = path.resolve(fileName);
 
@@ -272,85 +257,9 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
     return true;
 };
 
-// Email sending function with CC and BCC options
-// export const sendEmail = async ({
-//     to,
-//     subject,
-//     html,
-//     text,
-//     replyTo,
-//     department = null,
-//     cc = null,
-//     bcc = null,
-// }) => {
-//     try {
-//         // Create a transporter object using SMTP transport
-//         const transporter = nodemailer.createTransport({
-//             host: process.env.NREP_EMAIL_HOST, // e.g., 'smtp.gmail.com' for Gmail
-//             port: process.env.NREP_EMAIL_PORT, // e.g., 587
-//             secure: process.env.NREP_EMAIL_SECURE === 'true', // true for 465, false for other ports
-//             auth: {
-//                 user: process.env.NREP_EMAIL_INFO, // Your email address
-//                 pass: process.env.NREP_EMAIL_INFO_PASS, // Your email password or app-specific password
-//             },
-//         });
-
-//         // Set up email data
-//         const mailOptions = {
-//             from: `"${department !== null ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)" <${process.env.NREP_EMAIL_INFO}>`, // Sender address
-//             to, // Recipient(s)
-//             subject, // Subject line
-//             text, // Plain text body
-//             html, // HTML body
-//             replyTo: replyTo || process.env.EMAIL_REPLY_TO, // Reply-to address
-//         };
-
-//         // Conditionally add CC if provided
-//         if (cc) {
-//             mailOptions.cc = cc;
-//         }
-
-//         // Conditionally add BCC if provided
-//         if (bcc) {
-//             mailOptions.bcc = bcc;
-//         }
-
-//         // Send mail
-//         const info = await transporter.sendMail(mailOptions);
-
-//         console.log('Email sent: %s', info.messageId);
-//         return {
-//             success: true,
-//             messageId: info.messageId,
-//         };
-//     } catch (error) {
-//         console.error('Error sending email:', error);
-//         throw error;
-//     }
-// };
-
-// Email sending function
-// export const sendEmail = async ({ to, subject, html, text, replyTo }) => {
-//     try {
-//         const response = await client.sendEmail({
-//             From: process.env.POSTMARK_EMAIL_FROM,
-//             To: to,
-//             Subject: subject,
-//             HtmlBody: html,
-//             TextBody: text,
-//             ReplyTo: replyTo || process.env.POSTMARK_EMAIL_REPLY_TO,
-//         });
-
-//         console.log('Email sent successfully:', response);
-//         return {
-//             success: true,
-//             messageId: response.MessageID,
-//         };
-//     } catch (error) {
-//         console.error('Error sending email:', error);
-//         throw error;
-//     }
-// };
+//---------------------------------
+// Email Utilities
+//---------------------------------
 export const sendEmail = async ({
     to,
     subject,
@@ -427,6 +336,3 @@ export const sendEmail = async ({
       }
     }
   };  
-
-
-
