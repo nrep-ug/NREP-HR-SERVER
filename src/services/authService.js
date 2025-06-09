@@ -26,7 +26,7 @@ export const requestOTP = async (data) => {
     const saveOtpToDatabase = async (email, otp, emailSent) => {
         try {
             const response = await databases.createDocument(
-                hrDatabaseId,
+                hrDb.databaseId,
                 hrDb.otpRequestTableId,
                 otpId,
                 {
