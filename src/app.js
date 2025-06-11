@@ -13,9 +13,10 @@ import procureRoutes from './routes/procureRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
 import hrRoutes from './routes/hrRoutes.js';
+import codeGenRoutes from './routes/codeGenRoutes.js';
 
 // Configurations
-import corsOptions from './config/corsOptions.js'; // <-- Move CORS config here
+import corsOptions from './config/corsOptions.js';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/procure', procureRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/hr', hrRoutes);
+app.use('/api/codegen', codeGenRoutes);
 
 // === Error Handler ===
 app.use(errorHandler);

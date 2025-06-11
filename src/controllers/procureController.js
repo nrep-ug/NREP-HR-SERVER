@@ -1,7 +1,6 @@
 // src/controllers/procureController.js
 import { validationResult } from 'express-validator';
 import * as procureService from '../services/procureService.js';
-import mime from 'mime-types'
 
 // Register Service Provider
 export const signUpStaff = async (req, res, next) => {
