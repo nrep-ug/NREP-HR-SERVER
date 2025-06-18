@@ -14,6 +14,7 @@ import contactRoutes from './routes/contactRoutes.js';
 import testEmailRoute from './routes/testEmailRoute.js';
 import hrRoutes from './routes/hrRoutes.js';
 import codeGenRoutes from './routes/codeGenRoutes.js';
+import genRoutes from './routes/generalRoute.js';
 
 // Configurations
 import corsOptions from './config/corsOptions.js';
@@ -35,6 +36,7 @@ app.use('/api/procure', procureRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/codegen', codeGenRoutes);
+app.use('/api/general', genRoutes);
 
 // === Error Handler ===
 app.use(errorHandler);

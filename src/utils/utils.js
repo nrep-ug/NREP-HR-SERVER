@@ -263,7 +263,7 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 export const sendEmail = async ({
     to,
     subject,
-    html,
+    html=null,
     text,
     replyTo = null,
     department = null,
