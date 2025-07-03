@@ -9,12 +9,12 @@ export const sendRegConfirmationEmail = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    console.log('Received request to send registration confirmation email:', req.body);
-    const { email, subject, text, cc, bcc, eventEnd, eventStart  } = req.body;
+    // Extract data from request body
+    const { year, email, subject, text, cc, bcc, eventEnd, eventStart  } = req.body;
 
     try {
         // Call the service to send the email
-        const response = await recService.sendRegConfirmationEmail({ email, subject, text, cc, bcc, eventEnd, eventStart });
+        const response = await recService.sendRegConfirmationEmail({ year, email, subject, text, cc, bcc, eventEnd, eventStart });
         return res.status(200).json(response);
     } catch (error) {
         console.error('Error sending registration confirmation email:', error);

@@ -10,11 +10,11 @@ export const sendStaffEmail = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, subject, text, cc, bcc } = req.body;
+    const {  email, subject, text, cc, bcc } = req.body;
 
     try {
         // Call the service to send the email
-        const response = await generalServices.sendStaffEmail({ email, subject, text, cc, bcc });
+        const response = await generalServices.sendStaffEmail({  email, subject, text, cc, bcc });
         return res.status(200).json(response);
     } catch (error) {
         console.error('Error sending email:', error);

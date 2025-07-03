@@ -29,4 +29,9 @@ export const validateRegConfirmation = [
             if (value === null || value === '') return true;
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
         }).withMessage('Invalid BCC email format'),
+    body('year')
+        .notEmpty().withMessage('Year is required')
+        .isInt({ min: 2000, max: new Date().getFullYear() })
+        .withMessage('Year must be a valid integer between 2000 and the current year'),
+
 ];

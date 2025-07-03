@@ -65,13 +65,13 @@ export const uploadFile = async (file, fileInfo, bucketId) => {
     const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
     const uniqueId = `DOC-${currentDate}-${formattedCounter}`;
 
-    console.log('Uploading file ... ', uniqueId);
+    // console.log('Uploading file ... ', uniqueId);
     const response = await storage.createFile(
         bucketId,
         uniqueId,
         InputFile.fromBuffer(file, fileInfo.fileName)
     );
-    console.log('Finished uploading file: ', fileInfo.fileName);
+    // console.log('Finished uploading file: ', fileInfo.fileName);
 
     return response;
 };
@@ -113,16 +113,16 @@ export const appwriteFileView = async (fileId, bucketId) => {
 // Delete a file from the Appwrite bucket
 export const deleteAppwriteFile = async (bucketId, fileId) => {
     try {
-        console.log('deleteAppwriteFile: ', bucketId, ' ---File to be deleted: ', fileId);
+        // console.log('deleteAppwriteFile: ', bucketId, ' ---File to be deleted: ', fileId);
         const response = await storage.deleteFile(
             bucketId,
             fileId
         );
-        console.log('File deleted: ', fileId, '--BucketId: ', bucketId);
+        // console.log('File deleted: ', fileId, '--BucketId: ', bucketId);
         return response;
     }
     catch (err) {
-        console.log('Failed to delete file: ', err);
+        // console.log('Failed to delete file: ', err);
         return
     }
 }
@@ -320,7 +320,7 @@ export const sendEmail = async ({
     }
 
     const response = await client.sendEmail(emailData);
-    console.log('Email sent:', response);
+    // console.log('Email sent:', response);
     return { success: true, messageId: response.MessageID };
 
   } catch (err) {
@@ -374,7 +374,7 @@ export function generateCalendarInvite({
     method: 'REQUEST',
   });
 
-  console.log('Generated calendar invite:', resp);
+//   console.log('Generated calendar invite:', resp);
 
   return {
     subject: 'Conference Invitation',

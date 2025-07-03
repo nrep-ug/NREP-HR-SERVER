@@ -28,7 +28,7 @@ export const sendRegConfirmationEmail = async (data) => {
       description: data.subject,
       location: data.eventLocation,
       organizer: {
-        name: 'NREP Secretariat',
+        name: `REC${data.year} & EXPO Organizing Committee`,
         email: 'info@nrep.ug'
       },
       attendees: [
