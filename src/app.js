@@ -15,6 +15,7 @@ import testEmailRoute from './routes/testEmailRoute.js';
 import hrRoutes from './routes/hrRoutes.js';
 import codeGenRoutes from './routes/codeGenRoutes.js';
 import genRoutes from './routes/generalRoute.js';
+import recRoutes from './routes/recRoute.js'; // Renewable Energy Conference routes
 
 // Configurations
 import corsOptions from './config/corsOptions.js';
@@ -37,6 +38,7 @@ app.use('/api', contactRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/codegen', codeGenRoutes);
 app.use('/api/general', genRoutes);
+app.use('/api/rec', recRoutes); // Renewable Energy Conference routes
 
 // === Error Handler ===
 app.use(errorHandler);

@@ -6,6 +6,7 @@ import fs from 'fs/promises';        // Promise-based file system
 import fsSync from 'fs';               // Synchronous file system
 import path from 'path';
 import moment from 'moment-timezone';
+import ical from 'ical-generator';
 
 import nodemailer from 'nodemailer';
 import postmark from 'postmark';
@@ -260,79 +261,125 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 //---------------------------------
 // Email Utilities
 //---------------------------------
+/**
+ * Send an email via Postmark, optionally with attachments.
+ *
+ * @param {Object} opts
+ * @param {string} opts.to
+ * @param {string} opts.subject
+ * @param {string} [opts.html]
+ * @param {string} [opts.text]
+ * @param {string|string[]} [opts.cc]
+ * @param {string|string[]} [opts.bcc]
+ * @param {string} [opts.replyTo]
+ * @param {string} [opts.department]
+ * @param {Array<{ filename: string, content: string, contentType: string }>} [opts.attachments]
+ */
 export const sendEmail = async ({
-    to,
-    subject,
-    html=null,
-    text,
-    replyTo = null,
-    department = null,
-    cc = null,
-    bcc = null,
-  }) => {
-    try {
-      console.log('Type of cc:', typeof cc);
-      console.log('Value of cc:', cc);
-  
-      // Ensure the 'From' email is verified with Postmark
-      const verifiedFromEmail = process.env.POSTMARK_EMAIL_FROM; // Must be a verified email address
-      const fromDisplayName = `${department ? `${department} Department - ` : ''}National Renewable Energy Platform (NREP)`;
-      const from = `${fromDisplayName} <${verifiedFromEmail}>`;
-  
-      // Prepare email data for Postmark
-      const emailData = {
-        From: from,
-        To: to,
-        Subject: subject,
-        HtmlBody: html,
-        TextBody: text,
-        ReplyTo: replyTo || process.env.POSTMARK_EMAIL_REPLY_TO,
-      };
-  
-      // Conditionally add CC field if it is provided and not empty
-      if (cc) {
-        if (Array.isArray(cc)) {
-          if (cc.length > 0) {
-            emailData.Cc = cc.join(', ');
-          }
-        } else if (typeof cc === 'string' && cc.trim()) {
-          emailData.Cc = cc.trim();
-        } else {
-          console.warn('Invalid cc value:', cc);
-        }
-      }
-  
-      // Conditionally add BCC field if it is provided and not empty
-      if (bcc) {
-        if (Array.isArray(bcc)) {
-          if (bcc.length > 0) {
-            emailData.Bcc = bcc.join(', ');
-          }
-        } else if (typeof bcc === 'string' && bcc.trim()) {
-          emailData.Bcc = bcc.trim();
-        } else {
-          console.warn('Invalid bcc value:', bcc);
-        }
-      }
-  
-      // Send the email using the Postmark client
-      const response = await client.sendEmail(emailData);
-  
-      console.log('Email sent successfully:', response);
-      return {
-        success: true,
-        messageId: response.MessageID,
-      };
-    } catch (error) {
-      console.error('Error sending email:', error);
-  
-      // Postmark-specific error handling
-      if (error.code === 400) {
-        // Handle bad requests, such as invalid email addresses or unverified 'From' address
-        throw new Error(`Postmark Error: ${error.message}`);
-      } else {
-        // Re-throw other errors
-        throw error;
-      }
+  to,
+  subject,
+  html = null,
+  text = null,
+  replyTo = null,
+  department = null,
+  cc = null,
+  bcc = null,
+  attachments = []  // ← new!
+}) => {
+  try {
+    const verifiedFrom = process.env.POSTMARK_EMAIL_FROM;
+    const fromName = `${department ? `${department} Dept – ` : ''}NREP`;
+    const from = `${fromName} <${verifiedFrom}>`;
+
+    // Base email payload
+    const emailData = {
+      From:       from,
+      To:         to,
+      Subject:    subject,
+      HtmlBody:   html,
+      TextBody:   text,
+      ReplyTo:    replyTo || process.env.POSTMARK_EMAIL_REPLY_TO,
+    };
+
+    // CC / BCC logic (unchanged)
+    if (cc) {
+      emailData.Cc = Array.isArray(cc) ? cc.join(', ') : cc.trim();
     }
-  };  
+    if (bcc) {
+      emailData.Bcc = Array.isArray(bcc) ? bcc.join(', ') : bcc.trim();
+    }
+
+    // ─── NEW: handle attachments ───
+    if (attachments.length) {
+      // Postmark expects an array under the key "Attachments"
+      emailData.Attachments = attachments.map(att => ({
+        Name:        att.filename,
+        Content:     Buffer.from(att.content).toString('base64'),
+        ContentType: att.contentType
+      }));
+    }
+
+    const response = await client.sendEmail(emailData);
+    console.log('Email sent:', response);
+    return { success: true, messageId: response.MessageID };
+
+  } catch (err) {
+    console.error('Error sending email:', err);
+    if (err.code === 400) {
+      throw new Error(`Postmark Error: ${err.message}`);
+    }
+    throw err;
+  }
+};
+
+/**
+ * Generate an .ics calendar invite as an attachment object
+ * @param {Object} opts
+ * @param {string} opts.domain            – your domain (e.g. "nrep.ug")
+ * @param {Object} opts.prodId            – prodId metadata, e.g. { company: 'NREP', product: 'REC' }
+ * @param {Date}   opts.start             – event start date/time
+ * @param {Date}   opts.end               – event end date/time
+ * @param {string} opts.summary           – event title
+ * @param {string} [opts.description]     – event description
+ * @param {string} opts.location          – event location
+ * @param {Object} opts.organizer         – { name: string, email: string }
+ * @param {Array<Object>} opts.attendees  – [{ name: string, email: string, rsvp: boolean }, …]
+ * @returns {Object} attachment for Nodemailer
+ */
+export function generateCalendarInvite({
+  domain,
+  prodId,
+  start,
+  end,
+  summary='',
+  description = '',
+  location,
+  organizer,
+  attendees
+}) {
+  const cal = ical({
+    domain,
+    prodId,
+    name: summary,
+  });
+
+  const resp = cal.createEvent({
+    start,
+    end,
+    summary,
+    description,
+    location,
+    organizer,
+    attendees,
+    method: 'REQUEST',
+  });
+
+  console.log('Generated calendar invite:', resp);
+
+  return {
+    subject: 'Conference Invitation',
+    filename: 'invite.ics',
+    content: cal.toString(),
+    contentType: 'text/calendar; method=REQUEST'
+  };
+}

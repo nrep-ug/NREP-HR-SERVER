@@ -1,9 +1,8 @@
 import { sendEmail } from '../utils/utils.js';
 
 /** * Sends email to specified recipient.
- * @param {Object} req - Express request object containing the recipient's email.
- * @param {Object} res - Express response object.
- * @returns {Object} - Response object indicating success or failure.
+ * * @param {Object} data - Data containing email details.
+ * * @param {string} data.email - The email address of the recipient.
  */
 export const sendStaffEmail = async (data) => {
 
