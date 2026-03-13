@@ -4,6 +4,7 @@ import cors from 'cors';
 
 // Middleware
 import errorHandler from './middlewares/errorHandler.js';
+import { requestAudit, metricsRouter } from './middlewares/requestAudit.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -21,6 +22,13 @@ import recRoutes from './routes/recRoute.js'; // Renewable Energy Conference rou
 import corsOptions from './config/corsOptions.js';
 
 const app = express();
+
+// Set trust proxy for proper IP detection
+app.set('trust proxy', 1);
+
+// === Gateway Middleware (BEFORE any routes) ===
+app.use(requestAudit());
+app.use(metricsRouter());
 
 // === Middleware ===
 app.use(cors(corsOptions));
