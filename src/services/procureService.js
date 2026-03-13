@@ -13,10 +13,9 @@ import {
     procurementDb,
     hrDb
 } from '../config/appwrite.js';
-import { currentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile, generateAplaNumericCode, verifyCode, isCodeStillValid } from "../utils/utils.js";
-import { sendEmail } from '../utils/utils.js';
+import { getCurrentDateTime, uploadFile, isNrepUgEmail, appwriteFileView, deleteAppwriteFile, generateAplaNumericCode, verifyCode, isCodeStillValid, sendEmail } from '../utils/utils.js';
 import * as utils from "../utils/procureUtils.js"
-import bcrypt from 'bcrypt'; // Import bcrypt if using password hashing [WE'LL BE USING APPWRITE ENCRYPTION]
+import bcrypt from 'bcryptjs'; // Pure-JS drop-in for bcrypt (no native bindings, no tar vulnerability)
 import moment from 'moment-timezone';
 
 /* STAFF SERVICES */
@@ -30,9 +29,8 @@ export const signUpStaff = async (data) => {
     **/
 
     let staffData = { ...data }
-    console.log(staffData)
 
-    const createdAt = currentDateTime;
+    const createdAt = getCurrentDateTime();
 
     // Register to Procurement Database staff table
     const response = await databases.createDocument(
@@ -102,16 +100,14 @@ export const signInStaff = async (data) => {
 
         const user = procurementResponse.documents[0];
 
-        // Check if the password matches
-        if (userCredentials.password !== data.password) {
-            console.log('Invalid credentials');
+        // Check if the password matches using bcrypt (passwords stored as hashed values)
+        const passwordMatch = await bcrypt.compare(data.password, userCredentials.password);
+        if (!passwordMatch) {
             return {
                 status: false,
                 message: 'Invalid password. Please try again.'
             };
         }
-
-        console.log('Login successful');
 
         // Successful sign-in
         return {
@@ -126,12 +122,10 @@ export const signInStaff = async (data) => {
             }
         };
     } catch (error) {
-        console.log(error);
         return {
             success: false,
             status: false,
-            message: `An error occurred. Please try again later or contact support: ${error.message}`,
-            error: error.message
+            message: 'An error occurred. Please try again later or contact support.',
         };
     }
 };
@@ -143,12 +137,10 @@ export const signInStaff = async (data) => {
  */
 // Supplier Registration
 export const signUpSupplier = async (data) => {
-    console.log('signing up supplier')
     const file = data.files;
     let supplierData = { ...data.formData };
-    const createdAt = currentDateTime;
+    const createdAt = getCurrentDateTime();
     const supplierID = await utils.generateUniqueId('SR');
-    console.log('supplierID: ', supplierID);
 
     // Encrypt the password
     const saltRounds = 10;
@@ -202,21 +194,14 @@ export const signUpSupplier = async (data) => {
             newSupplierEntry
         );
     } catch (e) {
-        console.log('Error while signing up supplier: ', e);
-
-        // Delete the uploaded file from the database if provided, otherwise
-        console.log('Doc uploaded:', newSupplierEntry.document)
+        // Delete the uploaded file from the database if provided
         if (newSupplierEntry.document.length > 0) {
-            await deleteAppwriteFile(procurementDb.postBucketId, newSupplierEntry.document[0])
+            await deleteAppwriteFile(procurementDb.postBucketId, newSupplierEntry.document[0]);
         }
-
-        console.log(e);
         if (e.type === 'document_already_exists') {
-            console.log('error type: ', e.type)
-            throw new Error('The company email or selected login email is already in use.')
-        }
-        else {
-            throw new Error(`${e.type ? e.type : 'Failed to create account'}... ${e.message ? e.message : ''}`)
+            throw new Error('The company email or selected login email is already in use.');
+        } else {
+            throw new Error(`${e.type ? e.type : 'Failed to create account'}... ${e.message ? e.message : ''}`);
         }
     }
 
@@ -226,7 +211,6 @@ export const signUpSupplier = async (data) => {
 // Supplier sign-in
 export const signInSupplier = async (data) => {
     try {
-        console.log(data);
         // Retrieve user by email
         const userData = await databases.listDocuments(
             procurementDb.databaseId,
@@ -241,15 +225,12 @@ export const signInSupplier = async (data) => {
             };
         }
 
-        console.log('User Data: ', userData.documents);
-
         const user = userData.documents[0];
 
         // Assuming password is hashed, compare it with bcrypt
         const passwordMatch = await bcrypt.compare(data.password, user.password);
 
         if (!passwordMatch || data.email !== user.accountEmail) {
-            console.log('Invalid credentials...' + 'PasspasswordMatch: ', passwordMatch, ' ... user email: ', user.accountEmail);
             return {
                 status: false,
                 message: 'Invalid password. Please try again.'
@@ -266,23 +247,19 @@ export const signInSupplier = async (data) => {
             data: user
         };
     } catch (e) {
-        console.log(e);
         return {
             success: false,
             status: false,
-            message: `An error occurred. Please try again later or contact support: ${e}`,
-            error: e.message
+            message: 'An error occurred. Please try again later or contact support.',
         };
     }
 };
 
 // Function to handle the password reset request
 export const handlePasswordResetRequest = async (userEmail) => {
-    console.log('Password reset request: ', userEmail);
     // Check if email exists
     const emailExists = await utils.checkEmailExists(userEmail);
     if (!emailExists.exist) {
-        console.log('Email does not exist in the system.');
         throw new Error('Email does not exist');
     }
 
@@ -296,10 +273,8 @@ export const handlePasswordResetRequest = async (userEmail) => {
     const emailSent = await utils.sendPassResetEmail(userEmail, 'Password Reset Request', emailContent, 'help');
 
     if (emailSent) {
-        console.log('Email sent successfully.');
-
-        // Save the request to passwordReset.json
-        utils.savePasswordResetRequest(userEmail, resetCode);
+        // Save the request to passwordReset.json — awaited so it persists before returning
+        await utils.savePasswordResetRequest(userEmail, resetCode);
     }
 };
 
@@ -452,7 +427,7 @@ export const getSupplier = async (id) => {
  */
 // Post or Add a service/product
 export const createProcurementPost = async (formData, file) => {
-    const createdAt = moment().tz('Africa/Nairobi');
+    const createdAt = getCurrentDateTime();
     const postID = await utils.generateUniqueId('PS');
 
     // Parse arrays from JSON strings (if passed as JSON strings)
@@ -645,7 +620,7 @@ export const handleProcurementApplication = async (files, data) => {
         console.log('All files uploaded: ', allFiles);
 
         // Save to Supplier Application Table
-        const createdAt = currentDateTime;
+        const createdAt = getCurrentDateTime();
         const applicationID = await utils.generateUniqueId('PR');
 
         console.log('proceeding to finish application')
@@ -671,11 +646,8 @@ export const handleProcurementApplication = async (files, data) => {
             data: response,
         };
     } catch (error) {
-        console.error('Error during application submission: ', error);
-        throw new Error({
-            status: 500,
-            message: 'An error occurred during the application submission.',
-        });
+        console.error('Error during application submission:', error.message);
+        throw new Error('An error occurred during the application submission.');
     }
 };
 
@@ -696,13 +668,14 @@ export const getAppliedToServices = async (supplierID) => {
 }
 
 // Get Data to specific applied to services/products by Supplier
-export const getAppliedToServiceData = async (data) => {
+// Fixed: now accepts (supplierID, serviceID) to match how the controller calls it
+export const getAppliedToServiceData = async (supplierID, serviceID) => {
     const response = await databases.listDocuments(
         procurementDb.databaseId,
         procurementDb.supplierApplicationTableId,
         [
-            Query.equal('supplierID', data.supplierID),
-            Query.equal('applicationID', data.applicationID)
+            Query.equal('supplierID', supplierID),
+            Query.equal('applicationID', serviceID)
         ]
     )
 
@@ -734,7 +707,7 @@ export const updateApplicationStatusInDB = async (applicationID, status, comment
             {
                 status,
                 comments,
-                updatedAt: currentDateTime,
+                updatedAt: getCurrentDateTime(),
             }
         );
         //   console.log('Updated application in DB: ', updatedApplication)

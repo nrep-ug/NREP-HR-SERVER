@@ -10,7 +10,10 @@ import {
 import dotenv from 'dotenv';
 import fsSync from 'fs'; // Import the regular fs module for synchronous operations
 
-dotenv.config();
+dotenv.config({ quiet: true });
+
+// Base URL for the procurement/supplier portal — configure in .env as PROCUREMENT_PORTAL_URL
+const PROCUREMENT_PORTAL_URL = process.env.PROCUREMENT_PORTAL_URL || 'https://supplies.nrep.ug';
 
 const counterFilePath = path.resolve('./src/data/procurementCounter.json'); // Path to the counter file
 const counterDir = path.dirname(counterFilePath); // Directory path
@@ -105,8 +108,6 @@ export const checkEmailExists = async (userEmail) => {
         ]
     )
 
-    console.log('Account Email Check Response: ', response);
-
     return { exist: response.documents.length === 1, data: response.documents };
 
 };
@@ -182,7 +183,7 @@ export const generateStatusUpdateEmailContent = (
       </p>
       <p>
       We highly value the expertise and commitment demonstrated in your submission, and we encourage you to continue engaging with us. 
-      Please keep an eye on our <a href="https://supplies.nrep.ug">website</a> and <a href="https://supplies.nrep.ug/procurement">procurement portal</a> for updates on future opportunities that may align with your capabilities and interests.
+      Please keep an eye on our <a href="${PROCUREMENT_PORTAL_URL}">website</a> and <a href="${PROCUREMENT_PORTAL_URL}/procurement">procurement portal</a> for updates on future opportunities that may align with your capabilities and interests.
       </p>
       <p>
       We deeply appreciate your interest in partnering with NREP to advance renewable energy initiatives in Uganda, and we hope to collaborate with you in the near future.
@@ -236,7 +237,7 @@ export const generateStatusUpdateEmailContent = (
                 <!-- Header -->
                 <tr>
                   <td class="header">
-                    <img src="https://supplies.nrep.ug/images/NREP-WHITE.jpg" alt="NREP Logo" width="150" style="display:block; margin:0 auto;">
+                    <img src="${PROCUREMENT_PORTAL_URL}/images/NREP-WHITE.jpg" alt="NREP Logo" width="150" style="display:block; margin:0 auto;">
                   </td>
                 </tr>
                 <!-- Content -->
@@ -249,7 +250,7 @@ export const generateStatusUpdateEmailContent = (
                     <p><strong>Application ID:</strong> ${applicationID}</p>
                     ${comments ? `<p><strong>Comments:</strong> ${comments}</p>` : ''}
                     <p style="text-align:center;">
-                      <a href="https://supplies.nrep.ug/sign-in" class="button">View Your Application Status</a>
+                      <a href="${PROCUREMENT_PORTAL_URL}/sign-in" class="button">View Your Application Status</a>
                     </p>
                     <p>If you have any questions, please contact our support team.</p>
                     ${disclaimer}
@@ -285,7 +286,7 @@ export const generateStatusUpdateEmailContent = (
   
   ${comments ? `Comments: ${comments}` : ''}
   
-  Please visit our portal to view your application status: https://supplies.nrep.ug/sign-in
+  Please visit our portal to view your application status: ${PROCUREMENT_PORTAL_URL}/sign-in
   
   Best regards,
   Procurement Department,

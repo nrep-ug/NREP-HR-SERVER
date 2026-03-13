@@ -1,6 +1,6 @@
 // Load environment variables and dependencies
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 import app from './app.js';
 import logger from './utils/logger.js';

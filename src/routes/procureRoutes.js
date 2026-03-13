@@ -1,5 +1,6 @@
 // src/routes/procureRoutes.js
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import {
     signUpStaff,
     getAllServices,
@@ -35,13 +36,30 @@ import upload from '../config/multerConfig2.js'; // Import multer configuration
 
 const router = express.Router();
 
+// Rate limiters
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests from this IP, please try again later.' },
+});
+
+const sensitiveActionLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests from this IP, please try again later.' },
+});
+
 // Authentication routes
 router.post('/staff-register', signUpStaff) // To implement validateStaff
 router.post('/supplier-register', upload.single('documents'), validateSupplier, signUpSupplier);
-router.post('/sign-in', validateSignIn, signIn);
-router.post('/request-password-reset', handlePasswordResetRequest) // To implement validatePasswordResetEmail
-router.post('/validate-otp-password-reset', confirmPasswordResetCode)
-router.post('/set-new-password', handlePasswordChange)
+router.post('/sign-in', authLimiter, validateSignIn, signIn);
+router.post('/request-password-reset', sensitiveActionLimiter, handlePasswordResetRequest) // To implement validatePasswordResetEmail
+router.post('/validate-otp-password-reset', sensitiveActionLimiter, confirmPasswordResetCode)
+router.post('/set-new-password', sensitiveActionLimiter, handlePasswordChange)
 
 //Supplier related routes
 router.get('/suppliers', validateGetAllSuppliers, getAllSuppliers);

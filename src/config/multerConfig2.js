@@ -1,4 +1,4 @@
-// src/config/multerConfig.js
+// src/config/multerConfig2.js
 import multer from 'multer';
 
 // Define memory storage for multer
@@ -21,7 +21,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 30 * 1024 * 1024 // 10 MB max file size
+        fileSize: 30 * 1024 * 1024 // 30 MB max file size
     }
 });
 

@@ -4,7 +4,8 @@
 //---------------------------------
 import fs from 'fs/promises';        // Promise-based file system
 import fsSync from 'fs';               // Synchronous file system
-import path from 'path';
+import path from 'node:path';
+import { randomInt } from 'node:crypto';
 import moment from 'moment-timezone';
 import ical from 'ical-generator';
 
@@ -21,7 +22,18 @@ const client = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
 //---------------------------------
 // Date/Time Utilities
 //---------------------------------
-export const currentDateTime = moment().tz('Africa/Nairobi');
+
+/**
+ * Returns the current date/time in the Africa/Nairobi timezone.
+ * Always called as a function to return a fresh timestamp (not frozen at startup).
+ */
+export const getCurrentDateTime = () => moment().tz('Africa/Nairobi');
+
+/**
+ * @deprecated Use getCurrentDateTime() instead.
+ * Kept as a getter to avoid breaking any external code that may reference this.
+ */
+export const currentDateTime = getCurrentDateTime();
 
 export const formatDate = () => {
     // Format the date as 'DD-MM-YYYY-HHmmss'
@@ -65,13 +77,11 @@ export const uploadFile = async (file, fileInfo, bucketId) => {
     const formattedCounter = String(counterData[counterKey]).padStart(4, '0');
     const uniqueId = `DOC-${currentDate}-${formattedCounter}`;
 
-    // console.log('Uploading file ... ', uniqueId);
     const response = await storage.createFile(
         bucketId,
         uniqueId,
         InputFile.fromBuffer(file, fileInfo.fileName)
     );
-    // console.log('Finished uploading file: ', fileInfo.fileName);
 
     return response;
 };
@@ -98,10 +108,6 @@ export const uploadFile2 = async (file, fileInfo) => {
 
 // Appwrite File Preview
 export const appwriteFileView = async (fileId, bucketId) => {
-    // const result = await storage.getFileView(
-    //     bucketId,
-    //     fileId
-    // )
     const result = await storage.getFileDownload(
         bucketId,
         fileId
@@ -113,16 +119,13 @@ export const appwriteFileView = async (fileId, bucketId) => {
 // Delete a file from the Appwrite bucket
 export const deleteAppwriteFile = async (bucketId, fileId) => {
     try {
-        // console.log('deleteAppwriteFile: ', bucketId, ' ---File to be deleted: ', fileId);
         const response = await storage.deleteFile(
             bucketId,
             fileId
         );
-        // console.log('File deleted: ', fileId, '--BucketId: ', bucketId);
         return response;
     }
     catch (err) {
-        // console.log('Failed to delete file: ', err);
         return
     }
 }
@@ -165,12 +168,15 @@ export function isNrepUgEmail(email) {
     return regex.test(email);
 }
 
-// Generate a random alphanumeric code of specified length
+/**
+ * Generate a cryptographically secure random alphanumeric code of specified length.
+ * Uses node:crypto randomInt for uniform, secure randomness.
+ */
 export const generateAplaNumericCode = async (length) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
     for (let i = 0; i < length; i++) {
-        code += characters.charAt(Math.floor(Math.random() * characters.length));
+        code += characters[randomInt(0, characters.length)];
     }
     return code;
 };
@@ -209,13 +215,13 @@ export const verifyCode = async (fileName, expirationTimeInMinutes, userEmail, p
     if (currentTime.isAfter(codeExpirationTime)) {
         // Mark the code as expired
         existingRequests[requestIndex].isUsed = true;
-        await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8'); // Use fs.promises.writeFile
+        await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
         return false; // The code has expired
     }
 
     // Mark the code as used
     existingRequests[requestIndex].isUsed = true;
-    await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8'); // Use fs.promises.writeFile
+    await fs.writeFile(filePath, JSON.stringify(existingRequests, null, 2), 'utf8');
 
     // The code is valid and not expired
     return true;
@@ -227,8 +233,8 @@ export const isCodeStillValid = async (fileName, expirationTimeInMinutes, userEm
 
     // Read the existing requests from the specified JSON file
     let existingRequests = [];
-    if (fsSync.existsSync(filePath)) { // Use fsSync.existsSync
-        const fileContent = await fs.readFile(filePath, 'utf8'); // Use fs.promises.readFile
+    if (fsSync.existsSync(filePath)) {
+        const fileContent = await fs.readFile(filePath, 'utf8');
         existingRequests = fileContent ? JSON.parse(fileContent) : [];
     }
 
@@ -284,7 +290,7 @@ export const sendEmail = async ({
   department = null,
   cc = null,
   bcc = null,
-  attachments = []  // ← new!
+  attachments = []
 }) => {
   try {
     const verifiedFrom = process.env.POSTMARK_EMAIL_FROM;
@@ -309,7 +315,7 @@ export const sendEmail = async ({
       emailData.Bcc = Array.isArray(bcc) ? bcc.join(', ') : bcc.trim();
     }
 
-    // ─── NEW: handle attachments ───
+    // Handle attachments
     if (attachments.length) {
       // Postmark expects an array under the key "Attachments"
       emailData.Attachments = attachments.map(att => ({
@@ -320,7 +326,6 @@ export const sendEmail = async ({
     }
 
     const response = await client.sendEmail(emailData);
-    // console.log('Email sent:', response);
     return { success: true, messageId: response.MessageID };
 
   } catch (err) {
@@ -363,7 +368,7 @@ export function generateCalendarInvite({
     name: summary,
   });
 
-  const resp = cal.createEvent({
+  cal.createEvent({
     start,
     end,
     summary,
@@ -373,8 +378,6 @@ export function generateCalendarInvite({
     attendees,
     method: 'REQUEST',
   });
-
-//   console.log('Generated calendar invite:', resp);
 
   return {
     subject: 'Conference Invitation',

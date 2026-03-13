@@ -6,8 +6,9 @@ import * as codeGenService from '../services/codeGenService.js';
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
  */
-export const generateUniqueCode = async (req, res) => {
+export const generateUniqueCode = async (req, res, next) => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

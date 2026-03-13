@@ -252,8 +252,9 @@ export const getAllSuppliers = async (req, res, next) => {
         const { validated = null, userType = [] } = req.query;
 
         // Convert 'validated' from string to boolean and pass to the service
+        const supplierValidated = validated === 'true' ? true : validated === null ? null : false;
         const procure = await procureService.getAllSuppliers(
-            supplierValidated = validated === 'true' ? true : validated===null ? null : false,       // 'true' string becomes true, others become false
+            supplierValidated,       // 'true' string becomes true, null stays null, others become false
             userType,
         );
 
