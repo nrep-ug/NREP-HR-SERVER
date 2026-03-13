@@ -61,7 +61,8 @@
 // appwrite.js
 import { Client, Databases, ID, Query, Permission, Storage, Users } from 'node-appwrite';
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
+
 
 const client = new Client()
     .setEndpoint(process.env.APPWRITE_ENDPOINT)

@@ -14,11 +14,13 @@ if (process.env.LOKI_URL) {
     transport = pino.transport({
       target: 'pino-loki',
       options: {
-        host: process.env.LOKI_URL,    // e.g., http://45.148.31.38:3100
-        batching: true,
-        interval: 2000,
+        host: process.env.LOKI_URL,          // e.g. http://45.148.31.38:3100
+        // pino-loki v3: batching is now a single object (was batching: true + interval)
+        batching: {
+          interval: 2,                        // seconds between Loki flushes
+          maxBufferSize: 10_000,              // drop oldest logs if Loki is unreachable
+        },
         labels: { app: appLabel, env: envLabel },
-        timeout: 5000,
         replaceTimestamp: true,
       },
     });
@@ -56,7 +58,21 @@ register.registerMetric(reqDuration);
 
 export function metricsRouter() {
   const router = express.Router();
-  router.get('/metrics', async (_req, res) => {
+  const metricsSecret = process.env.METRICS_SECRET;
+
+  router.get('/metrics', async (req, res) => {
+    // If a METRICS_SECRET is configured, require it in the Authorization header
+    if (metricsSecret) {
+      const authHeader = req.headers['authorization'];
+      const providedToken = authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.slice(7)
+        : null;
+
+      if (providedToken !== metricsSecret) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+    }
+
     res.set('Content-Type', register.contentType);
     res.send(await register.metrics());
   });

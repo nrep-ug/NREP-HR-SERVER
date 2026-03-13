@@ -2,6 +2,12 @@
 // This file contains the service for sending registration confirmation emails for the Renewable Energy Conference (REC).
 import { sendEmail, generateCalendarInvite } from "../../utils/utils.js";
 
+// Organisation domain — configure in .env as NREP_DOMAIN
+const NREP_DOMAIN = process.env.NREP_DOMAIN || 'nrep.ug';
+// Organisation info email — configure in .env as NREP_INFO_EMAIL
+const NREP_INFO_EMAIL = process.env.NREP_INFO_EMAIL || 'info@nrep.ug';
+
+
 /** Send conference email registration confirmation to registrant.
  * @param {Object} data - Data containing email details.
  * @param {string} data.email - The email address of the recipient.
@@ -20,7 +26,7 @@ export const sendRegConfirmationEmail = async (data) => {
 
     // 1) Build the calendar attachment
     const calendarAttachment = generateCalendarInvite({
-      domain: 'nrep.ug',
+      domain: NREP_DOMAIN,
       prodId: { company: 'NREP', product: 'REC' },
       start: data.eventStart,
       end:   data.eventEnd,
@@ -29,7 +35,7 @@ export const sendRegConfirmationEmail = async (data) => {
       location: data.eventLocation,
       organizer: {
         name: `REC${data.year} & EXPO Organizing Committee`,
-        email: 'info@nrep.ug'
+        email: NREP_INFO_EMAIL
       },
       attendees: [
         { name: data.email.split('@')[0], email: data.email, rsvp: true }

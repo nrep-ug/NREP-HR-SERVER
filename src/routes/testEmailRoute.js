@@ -4,8 +4,21 @@ import { sendEmail } from '../utils/utils.js'; // Import your email function
 
 const router = express.Router();
 
-// Test email endpoint
+/**
+ * Test email endpoint — protected by ADMIN_KEY to prevent abuse.
+ * Only accessible if the request includes the correct X-Admin-Key header.
+ * Set ADMIN_KEY in your .env file.
+ */
 router.post('/send-test-email', async (req, res) => {
+    // Guard: require admin key header
+    const adminKey = process.env.ADMIN_KEY;
+    if (adminKey) {
+        const providedKey = req.headers['x-admin-key'];
+        if (!providedKey || providedKey !== adminKey) {
+            return res.status(403).json({ success: false, message: 'Forbidden' });
+        }
+    }
+
     try {
         const { to, subject, html, text } = req.body; // Get email details from the request
 
