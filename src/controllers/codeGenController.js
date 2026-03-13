@@ -1,28 +1,17 @@
 // src/controllers/codeGenController.js
 import { validationResult } from 'express-validator';
 import * as codeGenService from '../services/codeGenService.js';
+
 /**
  * Controller to handle unique code generation requests.
- * 
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  */
-export const generateUniqueCode = async (req, res, next) => {
-    // Validate request
+export const generateUniqueCode = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
     const { prefix, length } = req.body;
-
-    try {
-        // Generate the unique code using the service
-        const code = await codeGenService.generateUniqueCode(prefix, length);
-        return res.status(201).json({ code });
-    } catch (error) {
-        next(error);
-    }
-}
-    
+    const code = await codeGenService.generateUniqueCode(prefix, length);
+    return res.status(201).json({ code });
+};
