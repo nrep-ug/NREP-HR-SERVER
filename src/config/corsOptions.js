@@ -18,8 +18,8 @@ const defaultOrigins = [
     'http://hr.nrep.ug',
     'https://hr.nrep.ug',
     'https://lkkz9p-3005.csb.app',
-    'http://45.148.31.38:3030',
-    'http://45.148.31.38:3100',
+    'http://193.181.214.83:3030',
+    'http://193.181.214.83:3100',
 ];
 
 // Additional origins injected at runtime (e.g. alx.derrickml.com)
