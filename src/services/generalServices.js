@@ -11,6 +11,7 @@ export const sendStaffEmail = async (data) => {
         to: data.email,
         subject: data.subject,
         text: data.text,
+        html: data.html || null,
         cc: data.cc ? data.cc : null,
         bcc: data.bcc ? data.bcc : null,
     });

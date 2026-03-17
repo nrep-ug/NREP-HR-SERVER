@@ -10,9 +10,9 @@ export const sendStaffEmail = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, subject, text, cc, bcc } = req.body;
+    const { email, subject, text, html, cc, bcc } = req.body;
 
     // Errors auto-propagate to the global error handler in Express 5
-    const response = await generalServices.sendStaffEmail({ email, subject, text, cc, bcc });
+    const response = await generalServices.sendStaffEmail({ email, subject, text, html, cc, bcc });
     return res.status(200).json(response);
 };
