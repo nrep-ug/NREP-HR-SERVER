@@ -7,33 +7,8 @@ import client from 'prom-client';
 const appLabel = process.env.APP_NAME || 'nrep-hr-gateway';
 const envLabel = process.env.NODE_ENV || 'dev';
 
-// Optional Loki transport if LOKI_URL is set
-let transport;
-if (process.env.LOKI_URL) {
-  try {
-    transport = pino.transport({
-      target: 'pino-loki',
-      options: {
-        host: process.env.LOKI_URL,          // e.g. http://45.148.31.38:3100
-        // pino-loki v3: batching is now a single object (was batching: true + interval)
-        batching: {
-          interval: 2,                        // seconds between Loki flushes
-          maxBufferSize: 10_000,              // drop oldest logs if Loki is unreachable
-        },
-        labels: { app: appLabel, env: envLabel },
-        replaceTimestamp: true,
-      },
-    });
-  } catch (err) {
-    // Fall back to stdout if transport creation fails
-    // eslint-disable-next-line no-console
-    console.warn('pino-loki transport init failed; using stdout', err?.message);
-  }
-}
-
 export const logger = pino(
-  { level: process.env.LOG_LEVEL || 'info' },
-  transport
+  { level: process.env.LOG_LEVEL || 'info' }
 );
 
 // ---- Prometheus metrics (singleton) ----
@@ -103,7 +78,7 @@ export function requestAudit() {
   return function auditMiddleware(req, res, next) {
     const start = process.hrtime.bigint();
     httpLogger(req, res);
-    
+
     // Set correlation ID header after pino-http processes the request
     if (req.id) res.setHeader('x-correlation-id', req.id);
 
